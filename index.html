@@ -7,10 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 
-      === CSS MODULE === 
-      Styles for layout, canvas rendering, and UI components.
-    -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -25,13 +21,15 @@
             background-color: var(--bg-dark);
             color: #e5e5e5;
             overflow: hidden;
-            user-select: none; /* Prevent selection while drawing */
+            user-select: none;
+            touch-action: none; /* Prevent browser zooming/scrolling on canvas */
         }
 
-        /* Canvas Stack System */
+        /* Canvas Stack */
         #drawing-area {
             position: relative;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            /* Checkerboard Background */
             background-image: 
                 linear-gradient(45deg, #ccc 25%, transparent 25%), 
                 linear-gradient(-45deg, #ccc 25%, transparent 25%), 
@@ -40,6 +38,7 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
             background-color: white; 
+            transform-origin: top left;
         }
 
         canvas {
@@ -50,15 +49,13 @@
             image-rendering: crisp-edges;
         }
 
-        /* Layer z-indices */
-        #mainCanvas { z-index: 10; }
-        #previewLayer { z-index: 20; } /* Capture events here */
+        /* Z-Indices */
+        #layer-composition { z-index: 10; } /* The combined view of all layers */
+        #previewLayer { z-index: 20; } /* Ghost shapes / Current brush hover */
         #grid-overlay { z-index: 30; pointer-events: none; mix-blend-mode: difference; opacity: 0.3; }
 
-        /* UI Elements */
-        .tool-btn {
-            position: relative;
-        }
+        /* UI Styles */
+        .tool-btn { position: relative; }
         .tool-btn.active {
             background-color: var(--accent);
             border-color: #60a5fa;
@@ -66,15 +63,12 @@
         }
         
         .palette-swatch {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            cursor: pointer;
+            width: 20px; height: 20px;
+            border-radius: 4px; cursor: pointer;
             border: 1px solid #4b5563;
         }
         .palette-swatch:hover { transform: scale(1.2); }
 
-        /* Scrollbars & Ranges */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #2d2d2d; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
@@ -88,138 +82,139 @@
             width: 100%; height: 4px; background: #4b5563; border-radius: 2px;
         }
 
-        /* Layout */
+        /* Layout Areas */
         #canvas-wrapper {
-            height: calc(100% - 110px); 
+            height: calc(100% - 130px); 
             background-color: #0f0f0f;
+            overflow: auto; /* Allow scrolling */
+            position: relative;
         }
         
         #timeline-container {
-            height: 110px;
+            height: 130px;
             background-color: var(--bg-panel);
             border-top: 1px solid #374151;
         }
 
         .frame-preview {
-            width: 60px; height: 60px;
+            width: 70px; height: 70px;
             background-color: #374151;
             border: 2px solid #4b5563;
             border-radius: 4px;
             cursor: pointer; position: relative; flex-shrink: 0;
         }
         .frame-preview.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
-        .frame-preview canvas { width: 100%; height: 100%; }
-        
-        .delete-frame-btn {
-            position: absolute; top: -5px; right: -5px;
-            background: #ef4444; color: white;
-            width: 16px; height: 16px; border-radius: 50%;
-            font-size: 10px; display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .frame-preview:hover .delete-frame-btn { opacity: 1; }
+        .frame-preview canvas { width: 100%; height: 100%; image-rendering: pixelated; }
 
-        .tooltip-group {
-            position: relative;
+        /* Layer Item Styling */
+        .layer-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px; background: #374151;
+            margin-bottom: 4px; border-radius: 4px;
+            border: 1px solid transparent; cursor: pointer;
+            font-size: 11px;
         }
+        .layer-item.active { border-color: var(--accent); background: #4b5563; }
+        .layer-vis-btn { color: #9ca3af; cursor: pointer; }
+        .layer-vis-btn:hover { color: white; }
+        .layer-vis-btn.hidden-layer { color: #ef4444; opacity: 0.5; }
+
+        /* Minimap Reference Square */
+        #minimap-overlay {
+            position: absolute;
+            border: 2px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            pointer-events: none; /* Events handled by container */
+        }
+
         .tooltip-group:hover::after {
             content: attr(data-title);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #000;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            white-space: nowrap;
-            z-index: 50;
-            pointer-events: none;
-            margin-bottom: 5px;
+            position: absolute; bottom: 100%; left: 50%;
+            transform: translateX(-50%); background: #000; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 10px;
+            white-space: nowrap; z-index: 50; pointer-events: none; margin-bottom: 5px;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- 
-      === HTML MODULE ===
-      Layout structure: Sidebar (Tools/Settings) | Main (Canvas) | Timeline (Bottom)
-    -->
-
-    <aside class="w-full md:w-80 bg-gray-900 border-r border-gray-800 flex flex-col p-3 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0 text-sm">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-72 bg-gray-900 border-r border-gray-800 flex flex-col p-3 shadow-xl z-20 overflow-y-auto h-full md:h-screen shrink-0 text-sm">
         
-        <div class="mb-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>PixlPro</h1>
-            </div>
-             <div class="text-[10px] text-gray-500">v2.0</div>
+        <div class="mb-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-layer-group mr-2"></i>PixlPro</h1>
+            <div class="text-[10px] text-gray-500">v3.0</div>
         </div>
 
-        <!-- Preview & Playback -->
-        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700">
-            <div class="flex justify-between items-center mb-2">
+        <!-- Preview / Navigator -->
+        <div class="bg-gray-800 p-2 rounded-lg mb-3 border border-gray-700 relative group">
+            <div class="flex justify-between items-center mb-1">
                 <span class="text-[10px] uppercase font-bold text-gray-400">Preview</span>
                 <span id="fpsDisplay" class="text-[10px] text-blue-400 font-mono">12 FPS</span>
             </div>
             
-            <div class="w-full aspect-square bg-black rounded mb-2 flex items-center justify-center overflow-hidden border border-gray-700" style="background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%); background-size: 10px 10px;">
-                <canvas id="previewCanvas"></canvas>
+            <div id="preview-container" class="w-full aspect-square bg-black rounded mb-2 relative overflow-hidden cursor-move border border-gray-700" style="background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%); background-size: 10px 10px;">
+                <canvas id="previewCanvas" class="w-full h-full object-contain"></canvas>
+                <!-- Reference Rectangle for Panning -->
+                <div id="minimap-overlay"></div>
             </div>
 
             <div class="flex gap-1 mb-2">
                 <button id="playBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded text-xs"><i class="fas fa-play"></i></button>
                 <button id="stopBtn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1 rounded text-xs"><i class="fas fa-stop"></i></button>
             </div>
-            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="w-full h-1 bg-gray-600 rounded-lg">
         </div>
 
-        <!-- Tools Grid -->
-        <div class="mb-4">
-            <div class="flex justify-between items-end mb-2">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase">Tools</h3>
-                <div id="palette-history" class="flex gap-1">
-                    <!-- Dynamic palette swatches -->
-                </div>
+        <!-- Layer Manager -->
+        <div class="mb-3 flex-1 min-h-[100px] flex flex-col">
+            <div class="flex justify-between items-end mb-1">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase">Layers</h3>
+                <button id="addLayerBtn" class="text-xs bg-blue-600 px-2 rounded hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
             </div>
+            <div id="layers-list" class="flex-1 overflow-y-auto bg-gray-800 p-1 rounded border border-gray-700">
+                <!-- Layers injected here -->
+            </div>
+        </div>
 
-            <!-- Primary Tools -->
-            <div class="grid grid-cols-4 gap-1 mb-2">
-                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (P)">
+        <!-- Tools -->
+        <div class="mb-3">
+            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Tools</h3>
+            <div class="grid grid-cols-5 gap-1 mb-2">
+                <button class="tool-btn active p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="pencil" data-title="Pencil (1px)">
                     <i class="fas fa-pencil-alt text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="mirror" data-title="Vertical Mirror (V)">
-                    <i class="fas fa-columns text-xs"></i>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="brush" data-title="Brush (Size)">
+                    <i class="fas fa-paint-brush text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="bucket" data-title="Bucket (B)">
-                    <i class="fas fa-fill-drip text-xs"></i>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="dither" data-title="Dither Pattern">
+                    <i class="fas fa-border-style text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser (E)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eraser" data-title="Eraser">
                     <i class="fas fa-eraser text-xs"></i>
                 </button>
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="bucket" data-title="Fill">
+                    <i class="fas fa-fill-drip text-xs"></i>
+                </button>
                 
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="stroke" data-title="Line Tool (L)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="stroke" data-title="Line">
                     <i class="fas fa-slash text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="rect" data-title="Rectangle (R)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="rect" data-title="Rectangle">
                     <i class="far fa-square text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="circle" data-title="Circle (C)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="circle" data-title="Circle">
                     <i class="far fa-circle text-xs"></i>
                 </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="move" data-title="Move (M)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="move" data-title="Move">
                     <i class="fas fa-arrows-alt text-xs"></i>
                 </button>
-
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eyedropper" data-title="Picker (I)">
+                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="eyedropper" data-title="Picker">
                     <i class="fas fa-eye-dropper text-xs"></i>
-                </button>
-                <button class="tool-btn p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 tooltip-group" data-tool="lighten" data-title="Lighten/Darken (D)">
-                    <i class="fas fa-adjust text-xs"></i>
                 </button>
             </div>
 
-            <!-- Color & Options -->
+            <!-- Color & Brush Settings -->
             <div class="bg-gray-800 p-2 rounded border border-gray-700 flex flex-col gap-2">
                 <div class="flex items-center gap-2">
                      <input type="color" id="colorPicker" value="#000000" class="h-6 w-8 bg-transparent border-0 p-0 cursor-pointer">
@@ -227,246 +222,346 @@
                      <button id="swapColorsBtn" class="text-gray-400 hover:text-white"><i class="fas fa-exchange-alt"></i></button>
                 </div>
                 
-                <!-- Brush Size -->
-                <div id="brushSizeControl">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-[10px] text-gray-400">Pen Size</span>
-                        <span id="brushSizeDisplay" class="text-[10px] text-blue-400">1px</span>
-                    </div>
-                    <input type="range" id="brushSizeSlider" min="1" max="8" value="1" class="w-full h-1 bg-gray-600 rounded-lg">
+                <!-- Opacity -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-gray-400 w-10">Alpha</span>
+                    <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
+                </div>
+
+                <!-- Size -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-gray-400 w-10">Size</span>
+                    <input type="range" id="brushSizeSlider" min="1" max="10" value="1" class="flex-1 h-1 bg-gray-600 rounded-lg">
+                    <span id="brushSizeDisplay" class="text-[10px] text-blue-400 w-4 text-right">1</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Transformations -->
-        <div class="mb-4">
-            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Transforms</h3>
-            <div class="grid grid-cols-3 gap-1">
-                <button id="flipHBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Flip Horizontal">
-                    <i class="fas fa-arrows-alt-h"></i>
-                </button>
-                <button id="flipVBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Flip Vertical">
-                    <i class="fas fa-arrows-alt-v"></i>
-                </button>
-                <button id="rotateBtn" class="bg-gray-800 p-1.5 rounded border border-gray-700 text-xs hover:bg-gray-700 text-gray-300" title="Rotate 90">
-                    <i class="fas fa-redo"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Canvas Settings -->
-        <div class="mb-auto">
-            <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2">Canvas</h3>
-            <div class="grid grid-cols-2 gap-2 mb-2">
-                <input type="number" id="widthInput" value="32" class="bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
-                <input type="number" id="heightInput" value="32" class="bg-gray-800 text-white px-2 py-1 rounded text-xs border border-gray-700">
-            </div>
-            <button id="resizeBtn" class="w-full bg-blue-900/30 text-blue-400 border border-blue-900/50 hover:bg-blue-900/50 py-1 rounded text-xs mb-2">New</button>
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] text-gray-400">Grid</span>
-                <input type="checkbox" id="gridToggle" class="accent-blue-500">
-            </div>
+            
+            <div id="palette-history" class="flex gap-1 mt-2 flex-wrap"></div>
         </div>
 
         <!-- Export -->
-        <div class="pt-2 border-t border-gray-800 gap-2 flex flex-col mt-2">
-            <button id="downloadSheetBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-download"></i> Export Sprite Sheet
+        <div class="pt-2 border-t border-gray-800 gap-1 flex flex-col">
+            <div class="grid grid-cols-2 gap-1 mb-1">
+                 <input type="number" id="widthInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
+                 <input type="number" id="heightInput" value="32" class="bg-gray-800 text-white px-1 py-1 rounded text-xs border border-gray-700">
+            </div>
+            <button id="resizeBtn" class="bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 rounded text-xs">New Canvas</button>
+            <button id="downloadSheetBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold mt-1">
+                <i class="fas fa-download mr-1"></i> Export Sheet
             </button>
         </div>
     </aside>
 
     <!-- Main Workspace -->
     <main class="flex-1 flex flex-col h-full bg-gray-950 relative">
-        <div id="canvas-wrapper" class="flex items-center justify-center overflow-hidden">
+        <div id="canvas-wrapper" class="flex items-center justify-center">
             <div id="drawing-area">
-                <!-- Main canvas stores the actual pixel data -->
-                <canvas id="mainCanvas"></canvas>
-                <!-- Preview layer is for ghost shapes while dragging -->
+                <!-- Composition Layer (Visual Only) -->
+                <canvas id="layer-composition"></canvas>
+                <!-- Preview Layer (Interactions) -->
                 <canvas id="previewLayer"></canvas>
-                <!-- Grid overlay -->
+                <!-- Grid -->
                 <div id="grid-overlay"></div>
             </div>
         </div>
         
         <!-- Timeline -->
         <div id="timeline-container" class="flex items-center px-4 gap-4 overflow-x-auto relative">
-            <div class="flex flex-col gap-1 sticky left-0 z-10 bg-gray-800/90 p-1 rounded backdrop-blur">
-                <button id="addFrameBtn" class="bg-blue-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-blue-500"><i class="fas fa-plus"></i></button>
-                <button id="duplicateFrameBtn" class="bg-gray-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-gray-500"><i class="fas fa-copy"></i></button>
+            <div class="flex flex-col gap-1 sticky left-0 z-10 bg-gray-800/90 p-1 rounded backdrop-blur border border-gray-700">
+                <button id="addFrameBtn" class="bg-blue-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
+                <button id="duplicateFrameBtn" class="bg-gray-600 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-gray-500 text-white"><i class="fas fa-copy"></i></button>
+                 <button id="deleteFrameBtn" class="bg-red-900/50 w-6 h-6 rounded text-xs flex items-center justify-center hover:bg-red-800 text-red-300"><i class="fas fa-trash"></i></button>
             </div>
-            <div id="frames-list" class="flex gap-2 h-full items-center"></div>
+            <div id="frames-list" class="flex gap-2 h-full items-center p-2"></div>
         </div>
 
-        <div class="absolute bottom-[120px] right-4 bg-gray-900/80 backdrop-blur text-gray-400 px-2 py-1 rounded text-[10px] font-mono border border-gray-800">
-            <span id="coords">0, 0</span>
+        <div class="absolute bottom-[140px] right-4 bg-gray-900/80 backdrop-blur text-gray-400 px-2 py-1 rounded text-[10px] font-mono border border-gray-800 pointer-events-none">
+            <span id="coords">0, 0</span> | <span id="zoomDisplay">100%</span>
         </div>
     </main>
 
-    <!-- 
-      === JAVASCRIPT MODULE ===
-      Organized into namespaced objects for better structure.
-    -->
     <script>
-        // --- CONSTANTS & CONFIG ---
-        const Config = {
-            maxHistory: 20,
-            maxFrames: 100,
-            defaultSize: 32,
-            maxSize: 128
-        };
+        // --- CONFIG ---
+        const Config = { maxHistory: 20, maxFrames: 100, maxSize: 128 };
 
-        // --- STATE MANAGEMENT ---
+        // --- STATE ---
         const State = {
-            width: 32,
-            height: 32,
-            zoom: 20,
-            color: '#000000',
-            tool: 'pencil',
-            brushSize: 1,
+            width: 32, height: 32, zoom: 20,
+            color: '#000000', opacity: 1.0,
+            tool: 'pencil', brushSize: 1,
             isDrawing: false,
-            frames: [], // Array of ImageData
+            
+            // Frame Structure: { layers: [ { visible: true, data: ImageData }, ... ] }
+            frames: [], 
             currentFrameIndex: 0,
-            isPlaying: false,
-            fps: 12,
+            activeLayerIndex: 0,
+            
+            // Animation
+            isPlaying: false, fps: 12, timer: null,
+            
+            // History
             recentColors: ['#000000', '#ffffff', '#3b82f6', '#ef4444', '#10b981'],
-            dragStart: { x: 0, y: 0 } // For shape tools
+            dragStart: { x: 0, y: 0 },
+            
+            // Offscreen Helpers
+            offscreenCanvas: document.createElement('canvas'), // For layer composition
+            layerCanvas: document.createElement('canvas')      // For individual layer manipulation
         };
 
-        // --- DOM ELEMENTS ---
+        // --- DOM ---
         const UI = {
-            mainCanvas: document.getElementById('mainCanvas'),
+            compositionCanvas: document.getElementById('layer-composition'),
             previewLayer: document.getElementById('previewLayer'),
-            previewCanvas: document.getElementById('previewCanvas'),
             gridOverlay: document.getElementById('grid-overlay'),
             drawingArea: document.getElementById('drawing-area'),
+            wrapper: document.getElementById('canvas-wrapper'),
+            
             framesList: document.getElementById('frames-list'),
+            layersList: document.getElementById('layers-list'),
+            
+            previewCanvas: document.getElementById('previewCanvas'),
+            minimapOverlay: document.getElementById('minimap-overlay'),
+            previewContainer: document.getElementById('preview-container'),
+            
+            // Inputs
             colorPicker: document.getElementById('colorPicker'),
+            opacitySlider: document.getElementById('opacitySlider'),
             brushSizeSlider: document.getElementById('brushSizeSlider'),
             brushSizeDisplay: document.getElementById('brushSizeDisplay'),
-            paletteContainer: document.getElementById('palette-history'),
             toolBtns: document.querySelectorAll('.tool-btn'),
             fpsSlider: document.getElementById('fpsSlider'),
-            fpsDisplay: document.getElementById('fpsDisplay'),
+            
             coords: document.getElementById('coords'),
-            widthInput: document.getElementById('widthInput'),
-            heightInput: document.getElementById('heightInput')
+            zoomDisplay: document.getElementById('zoomDisplay'),
+            paletteContainer: document.getElementById('palette-history')
         };
 
-        const ctx = UI.mainCanvas.getContext('2d', { willReadFrequently: true });
+        const ctx = UI.compositionCanvas.getContext('2d');
         const pCtx = UI.previewLayer.getContext('2d');
+        const offCtx = State.offscreenCanvas.getContext('2d');
+        const layerCtx = State.layerCanvas.getContext('2d');
         const prevCtx = UI.previewCanvas.getContext('2d');
 
-        // --- CORE MODULES ---
-
+        // --- CANVAS MANAGER ---
         const CanvasManager = {
             init(w, h) {
                 State.width = Math.min(Math.max(w, 4), Config.maxSize);
                 State.height = Math.min(Math.max(h, 4), Config.maxSize);
                 
-                // Resize Canvases
-                [UI.mainCanvas, UI.previewLayer].forEach(c => {
-                    c.width = State.width;
-                    c.height = State.height;
-                });
-                
-                UI.previewCanvas.width = State.width;
-                UI.previewCanvas.height = State.height;
+                // Init Dimensions
+                [UI.compositionCanvas, UI.previewLayer].forEach(c => { c.width = State.width; c.height = State.height; });
+                State.offscreenCanvas.width = State.width; State.offscreenCanvas.height = State.height;
+                State.layerCanvas.width = State.width; State.layerCanvas.height = State.height;
+                UI.previewCanvas.width = State.width; UI.previewCanvas.height = State.height;
 
-                // Create initial frame
-                State.frames = [new ImageData(State.width, State.height)];
+                // Init Data
+                State.frames = [{ layers: [this.createLayer()] }];
                 State.currentFrameIndex = 0;
-                
-                this.updateZoom();
+                State.activeLayerIndex = 0;
+
+                this.updateZoom(true);
                 this.render();
                 AnimationManager.renderTimeline();
-                UI.widthInput.value = State.width;
-                UI.heightInput.value = State.height;
+                LayerManager.renderList();
             },
 
-            updateZoom() {
-                // Auto calculate nice zoom based on screen size? For now, fixed range.
-                const zoom = 500 / Math.max(State.width, State.height); 
-                State.zoom = Math.max(Math.min(zoom, 50), 4); // Clamp
+            createLayer() {
+                return { 
+                    visible: true, 
+                    data: new ImageData(State.width, State.height) 
+                };
+            },
 
+            updateZoom(center = false) {
+                // Apply Zoom to DOM
                 const w = State.width * State.zoom;
                 const h = State.height * State.zoom;
-
+                
                 UI.drawingArea.style.width = `${w}px`;
                 UI.drawingArea.style.height = `${h}px`;
-                
-                // Style canvases via CSS for scaling
-                [UI.mainCanvas, UI.previewLayer, UI.gridOverlay].forEach(el => {
-                    el.style.width = '100%';
-                    el.style.height = '100%';
-                });
+                [UI.compositionCanvas, UI.previewLayer, UI.gridOverlay].forEach(el => { el.style.width = '100%'; el.style.height = '100%'; });
 
-                // Update Grid
+                // Grid Pattern
                 UI.gridOverlay.style.backgroundSize = `${State.zoom}px ${State.zoom}px`;
-                if(State.zoom > 5) {
-                     UI.gridOverlay.style.backgroundImage = `
-                        linear-gradient(to right, rgba(128, 128, 128, 0.5) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(128, 128, 128, 0.5) 1px, transparent 1px)
-                    `;
+                UI.gridOverlay.style.backgroundImage = State.zoom > 4 ? 
+                    `linear-gradient(to right, rgba(128, 128, 128, 0.3) 1px, transparent 1px),
+                     linear-gradient(to bottom, rgba(128, 128, 128, 0.3) 1px, transparent 1px)` : 'none';
+
+                UI.zoomDisplay.textContent = `${Math.round(State.zoom * 10)}%`;
+                
+                if (center) {
+                    UI.wrapper.scrollTo((w - UI.wrapper.clientWidth)/2, (h - UI.wrapper.clientHeight)/2);
+                }
+                
+                this.updateMinimap();
+            },
+            
+            updateMinimap() {
+                // Calculate Minimap Rect
+                const wrap = UI.wrapper;
+                const area = UI.drawingArea;
+                
+                const ratioX = wrap.clientWidth / area.offsetWidth;
+                const ratioY = wrap.clientHeight / area.offsetHeight;
+                
+                // If viewport is smaller than canvas
+                if(ratioX < 1 || ratioY < 1) {
+                    UI.minimapOverlay.style.display = 'block';
+                    const preW = UI.previewContainer.clientWidth;
+                    const preH = UI.previewContainer.clientHeight;
+                    
+                    const rectW = Math.min(1, ratioX) * preW;
+                    const rectH = Math.min(1, ratioY) * preH;
+                    
+                    const left = (wrap.scrollLeft / area.offsetWidth) * preW;
+                    const top = (wrap.scrollTop / area.offsetHeight) * preH;
+                    
+                    UI.minimapOverlay.style.width = `${rectW}px`;
+                    UI.minimapOverlay.style.height = `${rectH}px`;
+                    UI.minimapOverlay.style.left = `${left}px`;
+                    UI.minimapOverlay.style.top = `${top}px`;
                 } else {
-                    UI.gridOverlay.style.backgroundImage = 'none';
+                    UI.minimapOverlay.style.display = 'none';
                 }
             },
 
             render() {
+                // Composite all layers of current frame onto Main Canvas
                 ctx.clearRect(0, 0, State.width, State.height);
-                if(State.frames[State.currentFrameIndex]) {
-                    ctx.putImageData(State.frames[State.currentFrameIndex], 0, 0);
-                }
-                this.updateMiniPreview();
-            },
+                
+                const frame = State.frames[State.currentFrameIndex];
+                if (!frame) return;
 
-            updateMiniPreview() {
-                prevCtx.clearRect(0,0, State.width, State.height);
-                if(State.frames[State.currentFrameIndex]) {
-                    prevCtx.putImageData(State.frames[State.currentFrameIndex], 0, 0);
-                }
-            },
+                frame.layers.forEach(layer => {
+                    if (layer.visible) {
+                        // Use offscreen canvas to putImageData, then drawImage to support alpha blending
+                        offCtx.putImageData(layer.data, 0, 0);
+                        ctx.drawImage(State.offscreenCanvas, 0, 0);
+                    }
+                });
 
-            saveFrame() {
-                State.frames[State.currentFrameIndex] = ctx.getImageData(0, 0, State.width, State.height);
-                AnimationManager.updateTimelineThumb(State.currentFrameIndex);
-                this.updateMiniPreview();
+                // Update Preview Window
+                prevCtx.clearRect(0, 0, State.width, State.height);
+                prevCtx.drawImage(UI.compositionCanvas, 0, 0);
             },
             
-            clearPreviewLayer() {
-                pCtx.clearRect(0, 0, State.width, State.height);
+            getCurrentLayerData() {
+                return State.frames[State.currentFrameIndex].layers[State.activeLayerIndex].data;
+            },
+            
+            saveLayerChange() {
+                // Triggered after drawing actions
+                AnimationManager.updateTimelineThumb(State.currentFrameIndex);
+                this.render(); // Re-composite
             }
         };
 
+        // --- LAYER MANAGER ---
+        const LayerManager = {
+            addLayer() {
+                // Add a new empty layer to EVERY frame to keep sync
+                State.frames.forEach(frame => {
+                    frame.layers.push(CanvasManager.createLayer());
+                });
+                State.activeLayerIndex = State.frames[0].layers.length - 1;
+                this.renderList();
+                CanvasManager.render();
+            },
+
+            deleteLayer(index) {
+                if (State.frames[0].layers.length <= 1) return; // Keep at least one
+                
+                State.frames.forEach(frame => {
+                    frame.layers.splice(index, 1);
+                });
+                
+                if (State.activeLayerIndex >= index && State.activeLayerIndex > 0) {
+                    State.activeLayerIndex--;
+                }
+                this.renderList();
+                CanvasManager.render();
+            },
+
+            toggleVisibility(index) {
+                State.frames.forEach(frame => {
+                    frame.layers[index].visible = !frame.layers[index].visible;
+                });
+                this.renderList();
+                CanvasManager.render();
+            },
+
+            selectLayer(index) {
+                State.activeLayerIndex = index;
+                this.renderList();
+            },
+
+            renderList() {
+                UI.layersList.innerHTML = '';
+                // Reverse iterate so top layer is at top of list
+                const layers = State.frames[State.currentFrameIndex].layers;
+                for (let i = layers.length - 1; i >= 0; i--) {
+                    const layer = layers[i];
+                    const div = document.createElement('div');
+                    div.className = `layer-item ${i === State.activeLayerIndex ? 'active' : ''}`;
+                    div.onclick = () => this.selectLayer(i);
+                    
+                    const visBtn = document.createElement('i');
+                    visBtn.className = `fas fa-eye layer-vis-btn ${!layer.visible ? 'hidden-layer' : ''}`;
+                    visBtn.onclick = (e) => { e.stopPropagation(); this.toggleVisibility(i); };
+
+                    const name = document.createElement('span');
+                    name.textContent = `Layer ${i + 1}`;
+                    name.className = "flex-1";
+                    
+                    const delBtn = document.createElement('i');
+                    delBtn.className = "fas fa-trash text-gray-500 hover:text-red-400 text-[10px]";
+                    delBtn.onclick = (e) => { e.stopPropagation(); this.deleteLayer(i); };
+
+                    div.appendChild(visBtn);
+                    div.appendChild(name);
+                    div.appendChild(delBtn);
+                    UI.layersList.appendChild(div);
+                }
+            }
+        };
+
+        // --- TOOL MANAGER ---
         const ToolManager = {
-            // Helper: Hex to RGBA
-            hexToRgba(hex) {
+            hexToRgba(hex, alpha) {
                 const r = parseInt(hex.slice(1, 3), 16);
                 const g = parseInt(hex.slice(3, 5), 16);
                 const b = parseInt(hex.slice(5, 7), 16);
-                return { r, g, b, a: 255 };
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             },
 
-            plot(x, y, color, context = ctx) {
-                // Respect Brush Size (Simple Square Brush)
-                const size = (State.tool === 'pencil' || State.tool === 'mirror') ? 1 : State.brushSize;
-                const offset = Math.floor(size/2);
+            // Drawing primitive that writes to the Active Layer
+            plot(x, y, colorStr, context, isEraser = false) {
+                let size = State.brushSize;
+                // Pencil is always 1px
+                if (State.tool === 'pencil' || State.tool === 'mirror') size = 1;
+
+                if (State.tool === 'dither') {
+                    if ((Math.floor(x) + Math.floor(y)) % 2 !== 0) return;
+                }
+
+                // We draw onto the Context provided (usually offscreen layerCtx)
+                // then commit that back to ImageData
                 
-                context.fillStyle = color;
-                context.fillRect(x - offset, y - offset, size, size);
+                context.fillStyle = isEraser ? 'rgba(0,0,0,1)' : colorStr;
+                context.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+                
+                const offset = Math.floor(size / 2);
+                context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
             },
-            
-            // Bresenham's Line Algorithm
-            drawLine(x0, y0, x1, y1, color, context = ctx) {
-                const dx = Math.abs(x1 - x0);
-                const dy = Math.abs(y1 - y0);
-                const sx = (x0 < x1) ? 1 : -1;
-                const sy = (y0 < y1) ? 1 : -1;
-                let err = dx - dy;
 
+            // Bresenham Line
+            drawLine(x0, y0, x1, y1, color, ctx, isEraser) {
+                x0=Math.floor(x0); y0=Math.floor(y0); x1=Math.floor(x1); y1=Math.floor(y1);
+                const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+                const sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
+                let err = dx - dy;
                 while (true) {
-                    this.plot(x0, y0, color, context);
+                    this.plot(x0, y0, color, ctx, isEraser);
                     if (x0 === x1 && y0 === y1) break;
                     const e2 = 2 * err;
                     if (e2 > -dy) { err -= dy; x0 += sx; }
@@ -474,398 +569,284 @@
                 }
             },
             
-            drawRect(x0, y0, x1, y1, color, context = ctx) {
-                const w = x1 - x0;
-                const h = y1 - y0;
-                // Hollow rect
-                // Top
-                this.drawLine(x0, y0, x1, y0, color, context);
-                // Bottom
-                this.drawLine(x0, y1, x1, y1, color, context);
-                // Left
-                this.drawLine(x0, y0, x0, y1, color, context);
-                // Right
-                this.drawLine(x1, y0, x1, y1, color, context);
+            drawRect(x0, y0, x1, y1, color, ctx) {
+                 this.drawLine(x0, y0, x1, y0, color, ctx, false);
+                 this.drawLine(x0, y1, x1, y1, color, ctx, false);
+                 this.drawLine(x0, y0, x0, y1, color, ctx, false);
+                 this.drawLine(x1, y0, x1, y1, color, ctx, false);
             },
 
-            drawCircle(x0, y0, x1, y1, color, context = ctx) {
-                // Midpoint ellipse/circle algorithm simplified
+            drawCircle(x0, y0, x1, y1, color, ctx) {
                 let r = Math.floor(Math.sqrt(Math.pow(x1-x0, 2) + Math.pow(y1-y0, 2)));
-                let x = r, y = 0;
-                let P = 1 - r;
-                
-                const plotCircle = (cx, cy, x, y) => {
-                    this.plot(cx + x, cy + y, color, context);
-                    this.plot(cx - x, cy + y, color, context);
-                    this.plot(cx + x, cy - y, color, context);
-                    this.plot(cx - x, cy - y, color, context);
-                    this.plot(cx + y, cy + x, color, context);
-                    this.plot(cx - y, cy + x, color, context);
-                    this.plot(cx + y, cy - x, color, context);
-                    this.plot(cx - y, cy - x, color, context);
+                let x = r, y = 0, P = 1 - r;
+                const plotSym = (cx, cy, x, y) => {
+                    this.plot(cx+x, cy+y, color, ctx); this.plot(cx-x, cy+y, color, ctx);
+                    this.plot(cx+x, cy-y, color, ctx); this.plot(cx-x, cy-y, color, ctx);
+                    this.plot(cx+y, cy+x, color, ctx); this.plot(cx-y, cy+x, color, ctx);
+                    this.plot(cx+y, cy-x, color, ctx); this.plot(cx-y, cy-x, color, ctx);
                 };
-
-                while (x > y) {
+                while(x > y) {
                     y++;
-                    if (P <= 0) P = P + 2 * y + 1;
-                    else {
-                        x--;
-                        P = P + 2 * y - 2 * x + 1;
-                    }
-                    if (x < y) break;
-                    plotCircle(x0, y0, x, y);
+                    if(P <= 0) P = P + 2*y + 1; else { x--; P = P + 2*y - 2*x + 1; }
+                    if(x < y) break;
+                    plotSym(x0, y0, x, y);
                 }
             },
 
-            // --- Tool Actions ---
+            // --- Tool Lifecycle ---
 
             start(x, y) {
                 State.isDrawing = true;
                 State.dragStart = { x, y };
+                
+                // Prepare Layer Canvas for editing
+                const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+                if(!currentLayer.visible) return; // Don't edit hidden layers
 
-                if (State.tool === 'pencil' || State.tool === 'brush') {
-                    this.plot(x, y, State.color);
-                } else if (State.tool === 'eraser') {
-                    ctx.clearRect(x - Math.floor(State.brushSize/2), y - Math.floor(State.brushSize/2), State.brushSize, State.brushSize);
+                layerCtx.clearRect(0, 0, State.width, State.height);
+                layerCtx.putImageData(currentLayer.data, 0, 0);
+
+                const rgba = this.hexToRgba(State.color, State.opacity);
+                const isEraser = State.tool === 'eraser';
+
+                if (['pencil', 'brush', 'dither', 'eraser'].includes(State.tool)) {
+                    this.plot(x, y, rgba, layerCtx, isEraser);
+                    this.updateLayerFromCtx(); // Commit immediately for fluid drawing
                 } else if (State.tool === 'mirror') {
-                    this.plot(x, y, State.color);
-                    this.plot(State.width - 1 - x, y, State.color);
+                    this.plot(x, y, rgba, layerCtx, false);
+                    this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
+                    this.updateLayerFromCtx();
                 } else if (State.tool === 'bucket') {
-                    this.floodFill(x, y, State.color);
-                    State.isDrawing = false; // One shot
+                    this.floodFill(x, y, State.color, State.opacity); // Bucket handles its own logic
                 } else if (State.tool === 'eyedropper') {
                     this.pickColor(x, y);
                     State.isDrawing = false;
-                } else if (State.tool === 'lighten') {
-                    this.lightenPixel(x, y);
                 }
-                // Shape tools don't draw on start, they wait for move/end
             },
 
             move(x, y) {
                 if (!State.isDrawing) return;
+                const currentLayer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+                if(!currentLayer.visible) return;
 
-                if (State.tool === 'pencil' || State.tool === 'brush') {
-                    // Simple interpolation could go here for smooth lines
-                    this.plot(x, y, State.color);
-                } else if (State.tool === 'eraser') {
-                    ctx.clearRect(x - Math.floor(State.brushSize/2), y - Math.floor(State.brushSize/2), State.brushSize, State.brushSize);
+                const rgba = this.hexToRgba(State.color, State.opacity);
+                const isEraser = State.tool === 'eraser';
+
+                if (['pencil', 'brush', 'dither', 'eraser'].includes(State.tool)) {
+                    // Interpolate
+                    this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, isEraser);
+                    State.dragStart = { x, y }; // Update last pos
+                    this.updateLayerFromCtx();
                 } else if (State.tool === 'mirror') {
-                    this.plot(x, y, State.color);
-                    this.plot(State.width - 1 - x, y, State.color);
-                } else if (State.tool === 'stroke') {
+                     this.plot(x, y, rgba, layerCtx, false);
+                     this.plot(State.width - 1 - x, y, rgba, layerCtx, false);
+                     this.updateLayerFromCtx();
+                } else if (['stroke', 'rect', 'circle'].includes(State.tool)) {
                     CanvasManager.clearPreviewLayer();
-                    this.drawLine(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
-                } else if (State.tool === 'rect') {
-                    CanvasManager.clearPreviewLayer();
-                    this.drawRect(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
-                } else if (State.tool === 'circle') {
-                    CanvasManager.clearPreviewLayer();
-                    this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, State.color, pCtx);
+                    const pCtx = UI.previewLayer.getContext('2d');
+                    pCtx.clearRect(0,0,State.width, State.height);
+                    if (State.tool === 'stroke') this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx, false);
+                    if (State.tool === 'rect') this.drawRect(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
+                    if (State.tool === 'circle') this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
                 } else if (State.tool === 'move') {
-                    // Logic for realtime move is complex for this snippet, so we do "drag to offset"
-                    // Implementation: Just clear and move canvas content by (x - prevX)
-                    // For stability, let's just do click-drag offset on commit or simple visual feedback
-                    // Simplified: We will do the move on 'end' for simplicity or stick to arrow key logic for pixel precision
-                } else if (State.tool === 'lighten') {
-                    this.lightenPixel(x, y);
+                    const dx = x - State.dragStart.x;
+                    const dy = y - State.dragStart.y;
+                    // Real-time move preview is tricky with ImageData logic, let's just do it on End for now
+                    // Or implement shift preview
                 }
             },
 
             end(x, y) {
                 if (!State.isDrawing) return;
+                State.isDrawing = false;
                 
-                // Commit shapes
-                if (State.tool === 'stroke') {
-                    this.drawLine(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
-                } else if (State.tool === 'rect') {
-                    this.drawRect(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
-                } else if (State.tool === 'circle') {
-                    this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, State.color, ctx);
+                const rgba = this.hexToRgba(State.color, State.opacity);
+                
+                // Finalize Shapes
+                if (['stroke', 'rect', 'circle'].includes(State.tool)) {
+                    if (State.tool === 'stroke') this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx, false);
+                    if (State.tool === 'rect') this.drawRect(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx);
+                    if (State.tool === 'circle') this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, rgba, layerCtx);
+                    
+                    this.updateLayerFromCtx();
+                    CanvasManager.clearPreviewLayer();
                 } else if (State.tool === 'move') {
                     const dx = x - State.dragStart.x;
                     const dy = y - State.dragStart.y;
-                    this.shiftCanvas(dx, dy);
+                    this.shiftLayer(dx, dy);
                 }
-
-                CanvasManager.clearPreviewLayer();
-                State.isDrawing = false;
-                CanvasManager.saveFrame();
+                
                 ColorManager.addToHistory(State.color);
             },
 
-            // --- Complex Tools ---
+            updateLayerFromCtx() {
+                const newData = layerCtx.getImageData(0, 0, State.width, State.height);
+                State.frames[State.currentFrameIndex].layers[State.activeLayerIndex].data = newData;
+                CanvasManager.saveLayerChange();
+            },
 
-            floodFill(startX, startY, fillColorHex) {
-                // ... BFS Logic ...
-                const fillColor = this.hexToRgba(fillColorHex);
-                const imageData = ctx.getImageData(0, 0, State.width, State.height);
+            floodFill(x, y, colorHex, opacity) {
+                // Get current layer data
+                const layer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
+                const data = layer.data;
+                const r = parseInt(colorHex.slice(1,3), 16), g = parseInt(colorHex.slice(3,5), 16), b = parseInt(colorHex.slice(5,7), 16), a = Math.floor(opacity*255);
                 
-                // Get start color
-                const idx = (startY * State.width + startX) * 4;
-                const startColor = {
-                    r: imageData.data[idx], g: imageData.data[idx+1], b: imageData.data[idx+2], a: imageData.data[idx+3]
+                const startPos = (y * State.width + x) * 4;
+                const sr = data.data[startPos], sg = data.data[startPos+1], sb = data.data[startPos+2], sa = data.data[startPos+3];
+                
+                if (sr===r && sg===g && sb===b && sa===a) return;
+
+                const match = (p) => {
+                    return data.data[p]===sr && data.data[p+1]===sg && data.data[p+2]===sb && data.data[p+3]===sa;
                 };
 
-                if (startColor.r === fillColor.r && startColor.g === fillColor.g && startColor.b === fillColor.b && startColor.a === fillColor.a) return;
-
-                const stack = [[startX, startY]];
-                while (stack.length) {
-                    const [x, y] = stack.pop();
-                    const i = (y * State.width + x) * 4;
+                const stack = [[x, y]];
+                while(stack.length) {
+                    const [cx, cy] = stack.pop();
+                    const pos = (cy * State.width + cx) * 4;
                     
-                    const cur = { r: imageData.data[i], g: imageData.data[i+1], b: imageData.data[i+2], a: imageData.data[i+3] };
-                    if (cur.r === startColor.r && cur.g === startColor.g && cur.b === startColor.b && cur.a === startColor.a) {
-                        imageData.data[i] = fillColor.r;
-                        imageData.data[i+1] = fillColor.g;
-                        imageData.data[i+2] = fillColor.b;
-                        imageData.data[i+3] = fillColor.a;
-
-                        if (x > 0) stack.push([x-1, y]);
-                        if (x < State.width-1) stack.push([x+1, y]);
-                        if (y > 0) stack.push([x, y-1]);
-                        if (y < State.height-1) stack.push([x, y+1]);
+                    if(match(pos)) {
+                        data.data[pos] = r; data.data[pos+1] = g; data.data[pos+2] = b; data.data[pos+3] = a;
+                        if(cx > 0) stack.push([cx-1, cy]);
+                        if(cx < State.width-1) stack.push([cx+1, cy]);
+                        if(cy > 0) stack.push([cx, cy-1]);
+                        if(cy < State.height-1) stack.push([cx, cy+1]);
                     }
                 }
-                ctx.putImageData(imageData, 0, 0);
-                CanvasManager.saveFrame();
+                
+                layerCtx.putImageData(data, 0, 0); // Sync context
+                CanvasManager.saveLayerChange();
+            },
+
+            shiftLayer(dx, dy) {
+                // Simple wrap-around shift or clip shift
+                const data = layerCtx.getImageData(0,0,State.width, State.height);
+                layerCtx.clearRect(0,0,State.width, State.height);
+                layerCtx.putImageData(data, dx, dy);
+                this.updateLayerFromCtx();
             },
 
             pickColor(x, y) {
+                // Pick from COMPOSITE view (what user sees)
                 const p = ctx.getImageData(x, y, 1, 1).data;
-                if (p[3] === 0) return; // Transparent
+                // p is [r,g,b,a]
+                if (p[3] === 0) return; 
+                
                 const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
-                ColorManager.setColor(hex);
+                const alpha = (p[3] / 255).toFixed(2);
+                
+                State.color = hex;
+                State.opacity = alpha;
+                UI.colorPicker.value = hex;
+                UI.opacitySlider.value = alpha;
+                
                 this.setTool('pencil');
             },
 
-            lightenPixel(x, y) {
-                 const p = ctx.getImageData(x, y, 1, 1);
-                 const d = p.data;
-                 if (d[3] === 0) return; // Ignore transparent
-                 
-                 // Simple lighten: increase RGB by 10
-                 const amt = 20;
-                 d[0] = Math.min(255, d[0] + amt);
-                 d[1] = Math.min(255, d[1] + amt);
-                 d[2] = Math.min(255, d[2] + amt);
-                 
-                 ctx.putImageData(p, x, y);
-            },
-
-            shiftCanvas(dx, dy) {
-                const img = ctx.getImageData(0, 0, State.width, State.height);
-                ctx.clearRect(0,0,State.width, State.height);
-                ctx.putImageData(img, dx, dy);
-            },
-            
             setTool(name) {
                 State.tool = name;
-                UI.toolBtns.forEach(b => {
-                    b.classList.toggle('active', b.dataset.tool === name);
-                });
-                
-                // Cursor handling
-                if(['eyedropper', 'move'].includes(name)) UI.previewLayer.style.cursor = 'move'; // Or specialized cursors
-                else if (name === 'bucket') UI.previewLayer.style.cursor = 'cell';
-                else UI.previewLayer.style.cursor = 'crosshair';
-            }
-        };
-
-        const ColorManager = {
-            setColor(hex) {
-                State.color = hex;
-                UI.colorPicker.value = hex;
-                document.getElementById('colorHex').textContent = hex;
-            },
-            addToHistory(hex) {
-                if(!State.recentColors.includes(hex)) {
-                    State.recentColors.unshift(hex);
-                    if(State.recentColors.length > 8) State.recentColors.pop();
-                    this.renderPalette();
-                }
-            },
-            renderPalette() {
-                UI.paletteContainer.innerHTML = '';
-                State.recentColors.forEach(c => {
-                    const d = document.createElement('div');
-                    d.className = 'palette-swatch';
-                    d.style.backgroundColor = c;
-                    d.onclick = () => this.setColor(c);
-                    UI.paletteContainer.appendChild(d);
-                });
-            }
-        };
-
-        const TransformManager = {
-            flipH() {
-                const img = ctx.getImageData(0,0,State.width, State.height);
-                const newImg = ctx.createImageData(State.width, State.height);
-                for(let y=0; y<State.height; y++) {
-                    for(let x=0; x<State.width; x++) {
-                        const i = (y*State.width + x)*4;
-                        const mirI = (y*State.width + (State.width-1-x))*4;
-                        newImg.data[mirI] = img.data[i];
-                        newImg.data[mirI+1] = img.data[i+1];
-                        newImg.data[mirI+2] = img.data[i+2];
-                        newImg.data[mirI+3] = img.data[i+3];
-                    }
-                }
-                ctx.putImageData(newImg, 0, 0);
-                CanvasManager.saveFrame();
-            },
-            flipV() {
-                const img = ctx.getImageData(0,0,State.width, State.height);
-                const newImg = ctx.createImageData(State.width, State.height);
-                for(let y=0; y<State.height; y++) {
-                    for(let x=0; x<State.width; x++) {
-                        const i = (y*State.width + x)*4;
-                        const mirI = ((State.height-1-y)*State.width + x)*4;
-                        newImg.data[mirI] = img.data[i];
-                        newImg.data[mirI+1] = img.data[i+1];
-                        newImg.data[mirI+2] = img.data[i+2];
-                        newImg.data[mirI+3] = img.data[i+3];
-                    }
-                }
-                ctx.putImageData(newImg, 0, 0);
-                CanvasManager.saveFrame();
-            },
-            rotate() {
-                // 90deg rotation requires square or resize. Assuming square for simplicity or crop.
-                // For a robust app, we swap width/height. Here we crop/center if not square.
-                const img = ctx.getImageData(0,0,State.width, State.height);
-                ctx.clearRect(0,0,State.width, State.height);
-                
-                // Helper to get pixel
-                const getP = (x,y) => {
-                    if(x<0||x>=State.width||y<0||y>=State.height) return [0,0,0,0];
-                    const i = (y*State.width+x)*4;
-                    return [img.data[i], img.data[i+1], img.data[i+2], img.data[i+3]];
-                };
-
-                // Simple 90 deg clockwise
-                for(let y=0; y<State.height; y++) {
-                    for(let x=0; x<State.width; x++) {
-                         // New x,y based on rotation around center? 
-                         // Simplest: (x,y) -> (height-1-y, x) if square.
-                         // Let's stick to square logic for Piskel-lite
-                         const nx = State.height - 1 - y;
-                         const ny = x;
-                         if(nx < State.width && ny < State.height) {
-                            const p = getP(x,y);
-                            // Draw point
-                            ctx.fillStyle = `rgba(${p[0]},${p[1]},${p[2]},${p[3]/255})`;
-                            ctx.fillRect(nx, ny, 1, 1);
-                         }
-                    }
-                }
-                CanvasManager.saveFrame();
+                UI.toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === name));
             }
         };
 
         const AnimationManager = {
-            timer: null,
             renderTimeline() {
                 UI.framesList.innerHTML = '';
                 State.frames.forEach((f, i) => {
                     const div = document.createElement('div');
                     div.className = `frame-preview ${i === State.currentFrameIndex ? 'active' : ''}`;
                     div.onclick = () => this.switchFrame(i);
-
+                    
+                    // Flatten layers to display thumbnail
                     const c = document.createElement('canvas');
                     c.width = State.width; c.height = State.height;
-                    c.getContext('2d').putImageData(f, 0, 0);
-                    div.appendChild(c);
+                    const cx = c.getContext('2d');
+                    f.layers.forEach(l => { if(l.visible) {
+                        const temp = document.createElement('canvas'); temp.width=State.width; temp.height=State.height;
+                        temp.getContext('2d').putImageData(l.data,0,0);
+                        cx.drawImage(temp, 0, 0);
+                    }});
                     
-                    const num = document.createElement('div');
-                    num.className = 'absolute bottom-1 right-1 text-[8px] text-gray-400 font-bold';
+                    div.appendChild(c);
+                    const num = document.createElement('span');
+                    num.className = "absolute bottom-0 right-1 text-[9px] text-gray-300 font-bold bg-black/50 px-1 rounded";
                     num.innerText = i + 1;
                     div.appendChild(num);
-
-                    if(State.frames.length > 1) {
-                        const del = document.createElement('div');
-                        del.className = 'delete-frame-btn';
-                        del.innerHTML = '<i class="fas fa-times"></i>';
-                        del.onclick = (e) => { e.stopPropagation(); this.deleteFrame(i); };
-                        div.appendChild(del);
-                    }
                     UI.framesList.appendChild(div);
                 });
             },
             updateTimelineThumb(i) {
                 if(!UI.framesList.children[i]) return;
                 const c = UI.framesList.children[i].querySelector('canvas');
-                c.getContext('2d').putImageData(State.frames[i], 0, 0);
+                const cx = c.getContext('2d');
+                cx.clearRect(0,0,State.width, State.height);
+                State.frames[i].layers.forEach(l => { if(l.visible) {
+                    const temp = document.createElement('canvas'); temp.width=State.width; temp.height=State.height;
+                    temp.getContext('2d').putImageData(l.data,0,0);
+                    cx.drawImage(temp, 0, 0);
+                }});
             },
             switchFrame(i) {
                 State.currentFrameIndex = i;
+                LayerManager.renderList();
                 CanvasManager.render();
-                Array.from(UI.framesList.children).forEach((el, idx) => {
-                    el.classList.toggle('active', idx === i);
-                });
+                // Update active UI
+                Array.from(UI.framesList.children).forEach((el, idx) => el.classList.toggle('active', idx===i));
             },
             addFrame() {
-                State.frames.splice(State.currentFrameIndex + 1, 0, new ImageData(State.width, State.height));
-                this.switchFrame(State.currentFrameIndex + 1);
+                // Copy layer structure from frame 0 but empty data
+                const newLayers = State.frames[0].layers.map(() => CanvasManager.createLayer());
+                State.frames.splice(State.currentFrameIndex+1, 0, { layers: newLayers });
+                this.switchFrame(State.currentFrameIndex+1);
                 this.renderTimeline();
             },
             duplicateFrame() {
                 const src = State.frames[State.currentFrameIndex];
-                const clone = new ImageData(new Uint8ClampedArray(src.data), State.width, State.height);
-                State.frames.splice(State.currentFrameIndex + 1, 0, clone);
-                this.switchFrame(State.currentFrameIndex + 1);
+                // Deep Copy
+                const newLayers = src.layers.map(l => ({ 
+                    visible: l.visible, 
+                    data: new ImageData(new Uint8ClampedArray(l.data.data), State.width, State.height) 
+                }));
+                State.frames.splice(State.currentFrameIndex+1, 0, { layers: newLayers });
+                this.switchFrame(State.currentFrameIndex+1);
                 this.renderTimeline();
             },
             deleteFrame(i) {
+                // Delete active frame logic - defaults to index
+                const target = i !== undefined ? i : State.currentFrameIndex;
                 if(State.frames.length <= 1) return;
-                State.frames.splice(i, 1);
+                State.frames.splice(target, 1);
                 if(State.currentFrameIndex >= State.frames.length) State.currentFrameIndex = State.frames.length - 1;
-                CanvasManager.render();
+                this.switchFrame(State.currentFrameIndex);
                 this.renderTimeline();
-            },
-            play() {
-                if(State.isPlaying) return;
-                State.isPlaying = true;
-                document.getElementById('playBtn').classList.add('bg-green-800'); // Dim
-                
-                let idx = 0;
-                const loop = () => {
-                    if(!State.isPlaying) return;
-                    prevCtx.clearRect(0,0,State.width, State.height);
-                    prevCtx.putImageData(State.frames[idx], 0, 0);
-                    idx = (idx + 1) % State.frames.length;
-                    this.timer = setTimeout(loop, 1000 / State.fps);
-                };
-                loop();
-            },
-            stop() {
-                State.isPlaying = false;
-                clearTimeout(this.timer);
-                document.getElementById('playBtn').classList.remove('bg-green-800');
-                CanvasManager.updateMiniPreview();
             }
         };
 
-        const ExportManager = {
-            downloadSpriteSheet() {
-                const c = document.createElement('canvas');
-                c.width = State.width * State.frames.length;
-                c.height = State.height;
-                const cx = c.getContext('2d');
-                State.frames.forEach((f, i) => cx.putImageData(f, i * State.width, 0));
-                
-                const a = document.createElement('a');
-                a.download = 'spritesheet.png';
-                a.href = c.toDataURL();
-                a.click();
+        const ColorManager = {
+            addToHistory(hex) {
+                if(!State.recentColors.includes(hex)) {
+                    State.recentColors.unshift(hex);
+                    if(State.recentColors.length > 10) State.recentColors.pop();
+                    this.render();
+                }
+            },
+            render() {
+                UI.paletteContainer.innerHTML = '';
+                State.recentColors.forEach(c => {
+                    const d = document.createElement('div');
+                    d.className = 'palette-swatch'; d.style.backgroundColor = c;
+                    d.onclick = () => {
+                        State.color = c; UI.colorPicker.value = c;
+                        document.getElementById('colorHex').textContent = c;
+                    };
+                    UI.paletteContainer.appendChild(d);
+                });
             }
         };
 
         // --- EVENT HANDLERS ---
-        
-        // Input Handling
         const getCoords = (e) => {
-            const r = UI.mainCanvas.getBoundingClientRect();
+            const r = UI.drawingArea.getBoundingClientRect();
             const cx = e.touches ? e.touches[0].clientX : e.clientX;
             const cy = e.touches ? e.touches[0].clientY : e.clientY;
             return {
@@ -874,116 +855,93 @@
             };
         };
 
-        // Pointer Events (Mouse + Touch)
-        const start = (e) => {
-            if(e.cancelable) e.preventDefault();
-            const {x, y} = getCoords(e);
-            if(x>=0 && x<State.width && y>=0 && y<State.height) {
-                ToolManager.start(x, y);
+        // Scroll Zooming
+        UI.wrapper.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -2 : 2;
+                let newZoom = State.zoom + delta;
+                newZoom = Math.min(Math.max(newZoom, 1), 60);
+                State.zoom = newZoom;
+                CanvasManager.updateZoom();
             }
+        }, { passive: false });
+
+        // Preview Window Panning
+        let isPanningMap = false;
+        const handleMapPan = (e) => {
+             if(!isPanningMap) return;
+             const r = UI.previewContainer.getBoundingClientRect();
+             const cx = e.touches ? e.touches[0].clientX : e.clientX;
+             const cy = e.touches ? e.touches[0].clientY : e.clientY;
+             
+             // Calculate percentage relative to preview box
+             const px = (cx - r.left) / r.width;
+             const py = (cy - r.top) / r.height;
+             
+             // Scroll main wrapper
+             UI.wrapper.scrollLeft = px * UI.drawingArea.offsetWidth - UI.wrapper.clientWidth / 2;
+             UI.wrapper.scrollTop = py * UI.drawingArea.offsetHeight - UI.wrapper.clientHeight / 2;
+             
+             CanvasManager.updateMinimap();
+        };
+        UI.previewContainer.addEventListener('mousedown', (e) => { isPanningMap = true; handleMapPan(e); });
+        window.addEventListener('mousemove', (e) => { handleMapPan(e); });
+        window.addEventListener('mouseup', () => isPanningMap = false);
+
+        // Drawing Events
+        const start = (e) => {
+            if(e.cancelable && e.target === UI.previewLayer) e.preventDefault();
+            const {x, y} = getCoords(e);
+            if(x>=0 && x<State.width && y>=0 && y<State.height) ToolManager.start(x, y);
         };
         const move = (e) => {
-            const {x, y} = getCoords(e);
-            if(x>=0 && x<State.width && y>=0 && y<State.height) {
+            if(!State.isDrawing) {
+                const {x, y} = getCoords(e);
                 UI.coords.innerText = `${x}, ${y}`;
+            } else {
+                const {x, y} = getCoords(e);
                 ToolManager.move(x, y);
             }
         };
         const end = (e) => {
-            // Need last known coords for end?
-            // Actually 'end' usually doesn't have coords in TouchEvent
-            // We use the last dragged position logic inside ToolManager if needed
-            // But here we can pass 0,0 or rely on State
-            // Let's pass the last known pos if possible, or just rely on state
-            // For shape tools, we need 'current mouse pos' which is tricky on 'mouseup'
-            // So we rely on the last 'move' event updating state, OR we track mouse globally.
-            // Simplified: Shape tools commit to the last drag position. 
-            // We can pass the MouseEvent clientX if available.
-            
-            // NOTE: For 'mouseup', e.clientX exists. For 'touchend', it doesn't.
-            let x=0, y=0;
-            if(e.changedTouches && e.changedTouches.length > 0) {
-                 const r = UI.mainCanvas.getBoundingClientRect();
-                 x = Math.floor((e.changedTouches[0].clientX - r.left) / State.zoom);
-                 y = Math.floor((e.changedTouches[0].clientY - r.top) / State.zoom);
-            } else {
-                 const r = UI.mainCanvas.getBoundingClientRect();
-                 x = Math.floor((e.clientX - r.left) / State.zoom);
-                 y = Math.floor((e.clientY - r.top) / State.zoom);
-            }
-            
+            if(!State.isDrawing) return;
+            // Get last known if touch
+            const {x, y} = getCoords(e.changedTouches ? {touches: e.changedTouches} : e);
             ToolManager.end(x, y);
         };
 
-        // Bindings
         UI.previewLayer.addEventListener('mousedown', start);
         window.addEventListener('mousemove', move);
         window.addEventListener('mouseup', end);
-        
         UI.previewLayer.addEventListener('touchstart', start, {passive:false});
         window.addEventListener('touchmove', move, {passive:false});
         window.addEventListener('touchend', end);
 
-        // UI Bindings
+        // UI Listeners
+        document.getElementById('addLayerBtn').onclick = () => LayerManager.addLayer();
         UI.toolBtns.forEach(b => b.onclick = () => ToolManager.setTool(b.dataset.tool));
-        UI.colorPicker.oninput = (e) => ColorManager.setColor(e.target.value);
-        UI.brushSizeSlider.oninput = (e) => {
-            State.brushSize = parseInt(e.target.value);
-            UI.brushSizeDisplay.innerText = State.brushSize + 'px';
-        };
-        document.getElementById('swapColorsBtn').onclick = () => {
-             // Logic to swap with transparent or secondary color? 
-             // For now just toggle eraser/pencil for quick usage
-             if(State.tool === 'eraser') ToolManager.setTool('pencil');
-             else ToolManager.setTool('eraser');
-        };
-
-        document.getElementById('flipHBtn').onclick = () => TransformManager.flipH();
-        document.getElementById('flipVBtn').onclick = () => TransformManager.flipV();
-        document.getElementById('rotateBtn').onclick = () => TransformManager.rotate();
-
+        UI.colorPicker.oninput = (e) => { State.color = e.target.value; document.getElementById('colorHex').textContent = e.target.value; };
+        UI.opacitySlider.oninput = (e) => { State.opacity = parseFloat(e.target.value); };
+        UI.brushSizeSlider.oninput = (e) => { State.brushSize = parseInt(e.target.value); UI.brushSizeDisplay.innerText = State.brushSize; };
+        
         document.getElementById('addFrameBtn').onclick = () => AnimationManager.addFrame();
         document.getElementById('duplicateFrameBtn').onclick = () => AnimationManager.duplicateFrame();
-        document.getElementById('playBtn').onclick = () => AnimationManager.play();
-        document.getElementById('stopBtn').onclick = () => AnimationManager.stop();
-        UI.fpsSlider.oninput = (e) => {
-            State.fps = parseInt(e.target.value);
-            UI.fpsDisplay.innerText = State.fps + ' FPS';
-            if(State.isPlaying) { AnimationManager.stop(); AnimationManager.play(); }
-        };
-
-        document.getElementById('resizeBtn').onclick = () => {
-            if(confirm("New Canvas? Unsaved work will be lost.")) {
-                CanvasManager.init(parseInt(UI.widthInput.value), parseInt(UI.heightInput.value));
-            }
-        };
-        document.getElementById('downloadSheetBtn').onclick = () => ExportManager.downloadSpriteSheet();
-
-        document.getElementById('gridToggle').onchange = (e) => {
-            UI.gridOverlay.style.display = e.target.checked ? 'block' : 'none';
-        };
-
+        document.getElementById('deleteFrameBtn').onclick = () => AnimationManager.deleteFrame();
+        
+        // Init
+        CanvasManager.init(32, 32);
+        ColorManager.render();
+        
         // Keyboard Shortcuts
         window.addEventListener('keydown', (e) => {
             if(e.target.tagName === 'INPUT') return;
-            switch(e.key.toLowerCase()) {
-                case 'p': ToolManager.setTool('pencil'); break;
-                case 'e': ToolManager.setTool('eraser'); break;
-                case 'b': ToolManager.setTool('bucket'); break;
-                case 'v': ToolManager.setTool('mirror'); break;
-                case 'l': ToolManager.setTool('stroke'); break;
-                case 'r': ToolManager.setTool('rect'); break;
-                case 'c': ToolManager.setTool('circle'); break;
-                case 'm': ToolManager.setTool('move'); break;
-                case ' ': e.preventDefault(); State.isPlaying ? AnimationManager.stop() : AnimationManager.play(); break;
-                case 'arrowright': AnimationManager.switchFrame(State.currentFrameIndex + 1); break;
-                case 'arrowleft': AnimationManager.switchFrame(State.currentFrameIndex - 1); break;
-            }
+            const k = e.key.toLowerCase();
+            if(k==='b') ToolManager.setTool('brush');
+            if(k==='p') ToolManager.setTool('pencil');
+            if(k==='e') ToolManager.setTool('eraser');
+            if(k==='f') ToolManager.setTool('bucket');
         });
-
-        // Initialize
-        ColorManager.renderPalette();
-        CanvasManager.init(32, 32);
 
     </script>
 </body>
