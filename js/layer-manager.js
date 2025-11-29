@@ -2,6 +2,134 @@
 // Manages layer creation, deletion, visibility, and renaming
 
 const LayerManager = {
+    // Drag and drop state
+    dragState: {
+        draggedIndex: null,
+        draggedElement: null,
+        dropIndex: null
+    },
+
+    /**
+     * Handle drag start event
+     */
+    handleDragStart(e) {
+        const index = parseInt(e.target.dataset.index);
+        this.dragState.draggedIndex = index;
+        this.dragState.draggedElement = e.target.closest('.layer-item');
+        
+        // Set drag data
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+        e.dataTransfer.setData('text/plain', index.toString());
+        
+        // Add dragging class for visual feedback
+        this.dragState.draggedElement.classList.add('dragging');
+        UI.layersList.classList.add('dragging');
+    },
+
+    /**
+     * Handle drag over event
+     */
+    handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        const targetElement = e.target.closest('.layer-item');
+        if (!targetElement || targetElement === this.dragState.draggedElement) {
+            return;
+        }
+        
+        // Remove previous drop target
+        const previousDropTarget = UI.layersList.querySelector('.layer-item.drag-over');
+        if (previousDropTarget) {
+            previousDropTarget.classList.remove('drag-over');
+        }
+        
+        // Add drag-over class to new target
+        targetElement.classList.add('drag-over');
+        this.dragState.dropIndex = parseInt(targetElement.dataset.index);
+    },
+
+    /**
+     * Handle drag end event
+     */
+    handleDragEnd() {
+        // Clean up visual feedback
+        if (this.dragState.draggedElement) {
+            this.dragState.draggedElement.classList.remove('dragging');
+        }
+        
+        const dragOverElement = UI.layersList.querySelector('.layer-item.drag-over');
+        if (dragOverElement) {
+            dragOverElement.classList.remove('drag-over');
+        }
+        
+        UI.layersList.classList.remove('dragging');
+        
+        // Reset drag state
+        this.dragState = {
+            draggedIndex: null,
+            draggedElement: null,
+            dropIndex: null
+        };
+    },
+
+    /**
+     * Handle drop event
+     */
+    handleDrop(e) {
+        e.preventDefault();
+        
+        if (this.dragState.draggedIndex === null || this.dragState.dropIndex === null) {
+            return;
+        }
+        
+        // Don't reorder if dropping on the same item
+        if (this.dragState.draggedIndex === this.dragState.dropIndex) {
+            return;
+        }
+        
+        // Reorder layers
+        this.reorderLayers(this.dragState.draggedIndex, this.dragState.dropIndex);
+        
+        // Clean up visual feedback
+        this.handleDragEnd();
+    },
+
+    /**
+     * Reorder layers in all frames
+     */
+    reorderLayers(fromIndex, toIndex) {
+        // Adjust indices if dragging from lower to higher index
+        // (since we'll be removing an item from the array)
+        let adjustedFromIndex = fromIndex;
+        let adjustedToIndex = toIndex;
+        
+        if (fromIndex < toIndex) {
+            adjustedToIndex = toIndex - 1;
+        }
+        
+        State.frames.forEach(frame => {
+            const layer = frame.layers.splice(adjustedFromIndex, 1)[0];
+            frame.layers.splice(adjustedToIndex, 0, layer);
+        });
+        
+        // Update active layer index if necessary
+        if (State.activeLayerIndex === fromIndex) {
+            State.activeLayerIndex = adjustedToIndex;
+        } else if (State.activeLayerIndex >= Math.min(fromIndex, adjustedToIndex) && 
+                   State.activeLayerIndex <= Math.max(fromIndex, adjustedToIndex)) {
+            if (fromIndex < adjustedToIndex) {
+                State.activeLayerIndex--;
+            } else {
+                State.activeLayerIndex++;
+            }
+        }
+        
+        // Re-render the layer list and canvas
+        this.renderList();
+        CanvasManager.render();
+    },
     /**
      * Add a new layer to all frames
      */
@@ -87,8 +215,23 @@ const LayerManager = {
             const layer = layers[i];
             const div = document.createElement('div');
             div.className = `layer-item ${i === State.activeLayerIndex ? 'active' : ''}`;
+            div.dataset.index = i.toString();
+            
+            // Add drag and drop event listeners
+            div.draggable = true;
+            div.addEventListener('dragstart', (e) => this.handleDragStart(e));
+            div.addEventListener('dragover', (e) => this.handleDragOver(e));
+            div.addEventListener('dragend', () => this.handleDragEnd());
+            div.addEventListener('drop', (e) => this.handleDrop(e));
+            
             div.onclick = () => this.selectLayer(i);
             
+            // Drag handle
+            const dragHandle = document.createElement('i');
+            dragHandle.className = 'fas fa-grip-vertical drag-handle';
+            dragHandle.title = 'Drag to reorder';
+            dragHandle.onclick = (e) => e.stopPropagation(); // Prevent layer selection when clicking handle
+
             // Visibility toggle
             const visBtn = document.createElement('i');
             visBtn.className = `fas fa-eye layer-vis-btn ${!layer.visible ? 'hidden-layer' : ''}`;
@@ -119,6 +262,7 @@ const LayerManager = {
                 this.deleteLayer(i);
             };
 
+            div.appendChild(dragHandle);
             div.appendChild(visBtn);
             div.appendChild(nameInput);
             div.appendChild(delBtn);
