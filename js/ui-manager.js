@@ -3,6 +3,8 @@ const UIManager = {
     init() {
         this.setupPanelToggle();
         this.setupContextSwitching();
+        // Set initial panel state for default tool (pencil)
+        this.updatePanelForTool('pencil');
     },
 
     setupPanelToggle() {
@@ -24,8 +26,8 @@ const UIManager = {
     },
 
     setupContextSwitching() {
-        // 1. Listen for Drawing Tool Clicks (Pencil, Brush, etc) - exclude Layers/Settings/Filters buttons
-        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn):not(#filtersBtn)');
+        // 1. Listen for Drawing Tool Clicks (Pencil, Brush, etc) - exclude Layers/Settings/Filters/Tilemap buttons
+        const drawingToolBtns = document.querySelectorAll('[data-tool]:not(#layersBtn):not(#settingsBtn):not(#filtersBtn):not(#tilemapBtn)');
         drawingToolBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 // Determine tool name from data attribute
@@ -64,15 +66,28 @@ const UIManager = {
             this.showPanelSections(['panel-preview', 'panel-filters']);
             this.setActiveSidebarButton('filtersBtn');
         });
+
+        // 5. Listen for Tilemap Button (prevent event bubbling)
+        const tilemapBtn = document.getElementById('tilemapBtn');
+        tilemapBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showPanelSections(['panel-preview', 'panel-tilemap']);
+            this.setActiveSidebarButton('tilemapBtn');
+            // Initialize tilemap manager if not already done
+            if (typeof TilemapManager !== 'undefined' && TilemapManager.init) {
+                TilemapManager.init();
+            }
+        });
     },
 
-    /**
-     * Updates the right panel content based on the selected drawing tool
+   /**
+     * Update the right panel content based on the active drawing tool
      */
     updatePanelForTool(toolName) {
-        // Define what shows for each tool
-        // Always show 'panel-preview' unless specifically excluded
-        
+        // Hide all tool option groups first
+        document.querySelectorAll('.tool-options-group').forEach(group => group.classList.add('hidden'));
+
         switch (toolName) {
             case 'pencil':
             case 'brush':
@@ -81,9 +96,13 @@ const UIManager = {
             case 'stroke':
             case 'rect':
             case 'circle':
-            case 'mirror':
                 // Drawing tools need Palette and Options
                 this.showPanelSections(['panel-preview', 'panel-palette', 'panel-tool-options']);
+                break;
+
+            case 'mirror':
+                // Mirror tool needs Palette, Options, and Mirror panel
+                this.showPanelSections(['panel-preview', 'panel-palette', 'panel-tool-options', 'mirror-options']);
                 break;
 
             case 'eraser':
@@ -118,7 +137,9 @@ const UIManager = {
             'panel-tool-options',
             'panel-layers',
             'panel-filters',
-            'panel-settings'
+            'panel-tilemap',
+            'panel-settings',
+            'mirror-options'
         ];
 
         allSections.forEach(id => {

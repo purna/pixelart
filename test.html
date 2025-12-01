@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seamless Tilemap Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --tile-dim: 32; /* The number of logical pixels across the tile */
+            --pixel-size: 16px; /* The size of one logical pixel on screen */
+            --canvas-size: 512px; /* 32 * 16 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(3, var(--canvas-size));
+            grid-template-rows: repeat(3, var(--canvas-size));
+            border: 1px solid #e0e7ff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        canvas {
+            width: var(--canvas-size);
+            height: var(--canvas-size);
+            background-color: #ffffff;
+            cursor: crosshair; /* Set cursor for all canvases for seamless feel */
+        }
+        #editor-canvas {
+            border: 2px solid #3b82f6; /* Highlight the editable canvas */
+            grid-column: 2;
+            grid-row: 2;
+        }
+        .controls-container {
+            max-width: calc(3 * var(--canvas-size));
+        }
+    </style>
+</head>
+<body class="p-8 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="controls-container flex flex-col justify-center items-center w-full mb-8 space-y-4">
+        <h1 class="text-3xl font-extrabold text-gray-900">Seamless Tile Editor</h1>
+        
+        <div class="flex flex-wrap justify-center items-center space-x-6">
+            <div class="flex space-x-4">
+                <button id="color-brush" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
+                    Brush (Left Click)
+                </button>
+                <button id="eraser-brush" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
+                    Eraser (Right Click)
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-3 mt-4 md:mt-0 p-2 bg-white rounded-lg shadow-inner">
+                <label for="brush-size" class="text-gray-700 font-medium whitespace-nowrap">Brush Size:</label>
+                <!-- Max set to 15 -->
+                <input type="range" id="brush-size" min="0" max="15" value="10" class="w-24">
+                <span id="brush-size-value" class="font-bold text-gray-900 w-8 text-right">21x21</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tile-grid">
+        <!-- The 3x3 canvas grid -->
+        <!-- Row 1 -->
+        <canvas id="preview-0-0" width="512" height="512"></canvas>
+        <canvas id="preview-0-1" width="512" height="512"></canvas>
+        <canvas id="preview-0-2" width="512" height="512"></canvas>
+        <!-- Row 2 -->
+        <canvas id="preview-1-0" width="512" height="512"></canvas>
+        <canvas id="editor-canvas" width="512" height="512"></canvas>
+        <canvas id="preview-1-2" width="512" height="512"></canvas>
+        <!-- Row 3 -->
+        <canvas id="preview-2-0" width="512" height="512"></canvas>
+        <canvas id="preview-2-1" width="512" height="512"></canvas>
+        <canvas id="preview-2-2" width="512" height="512"></canvas>
+    </div>
+
+    <div id="info-box" class="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-700 w-full max-w-lg text-center">
+        <p><strong>Instructions:</strong> Drag seamlessly across the 9 tiles to edit the central tile. Drawing now only stops when you release the mouse button or lift your finger.</p>
+    </div>
+
+    <script type="module">
+        // --- Firebase Setup (Standard Canvas Environment Requirement) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+
+        if (firebaseConfig) {
+            setLogLevel('Debug');
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            async function authenticate() {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    userId = auth.currentUser?.uid;
+                    isAuthReady = true;
+                    console.log("Firebase authentication successful. User ID:", userId);
+                } catch (error) {
+                    console.error("Firebase authentication failed:", error);
+                    isAuthReady = true;
+                }
+            }
+            authenticate();
+        }
+
+        // --- Tilemap Editor Logic ---
+
+        const TILE_DIM = 32;       // 32 logical pixels per tile
+        const PIXEL_SIZE = 16;     // 16 screen pixels per logical pixel
+        const CANVAS_SIZE = TILE_DIM * PIXEL_SIZE; // 512px
+        const DRAW_COLOR = 'rgb(40, 40, 40)'; // Dark gray/black for brush
+        const ERASE_COLOR = 'rgb(255, 255, 255)'; // White for eraser
+        
+        let BRUSH_R = 10; // Current brush radius from slider.
+
+        const editorCanvas = document.getElementById('editor-canvas');
+        const editorCtx = editorCanvas.getContext('2d');
+        const brushSizeSlider = document.getElementById('brush-size');
+        const brushSizeValueSpan = document.getElementById('brush-size-value');
+
+        // References to all 9 canvas elements
+        const allCanvases = [];
+        const previewContexts = [];
+
+        // Initialize all canvases, store grid position on element, and collect contexts
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const canvasId = (r === 1 && c === 1) ? 'editor-canvas' : `preview-${r}-${c}`;
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas.getContext('2d');
+                
+                // Store grid position on the canvas element for easy lookup in handleDrawing
+                canvas.gridR = r;
+                canvas.gridC = c;
+                
+                allCanvases.push(canvas);
+
+                if (canvasId !== 'editor-canvas') {
+                    previewContexts.push(ctx);
+                }
+                // Clear the canvas to white
+                ctx.fillStyle = ERASE_COLOR;
+                ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            }
+        }
+        
+        // Initialize brush size display
+        function updateBrushDisplay(radius) {
+            BRUSH_R = radius;
+            const size = 2 * radius + 1;
+            brushSizeValueSpan.textContent = `${size}x${size}`;
+        }
+
+        // Event listener for brush size slider
+        brushSizeSlider.addEventListener('input', (e) => {
+            updateBrushDisplay(parseInt(e.target.value, 10));
+        });
+        
+        // Initial setup for default value (21x21)
+        updateBrushDisplay(parseInt(brushSizeSlider.value, 10));
+
+
+        let isDrawing = false;
+        let currentBrush = DRAW_COLOR; // Default brush color
+
+        function updatePreviews() {
+            // Get the current image data from the central editor canvas
+            const imageData = editorCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            previewContexts.forEach(ctx => {
+                // Copy the image data to all 8 preview canvases
+                ctx.putImageData(imageData, 0, 0);
+            });
+        }
+
+        function drawPixel(ctx, tileX, tileY, color) {
+            // Convert logical tile coordinates (0-31) to screen pixel coordinates (0-511)
+            const screenX = tileX * PIXEL_SIZE;
+            const screenY = tileY * PIXEL_SIZE;
+
+            ctx.fillStyle = color;
+            ctx.fillRect(screenX, screenY, PIXEL_SIZE, PIXEL_SIZE);
+        }
+
+        // Global function to handle stopping drawing
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleDrawing(e) {
+            const targetCanvas = e.target;
+            
+            // FIX: The previous check `!targetCanvas.gridC` returned true when gridC was 0 (the left column), 
+            // preventing drawing on the entire left side. We check if gridC is a valid number instead.
+            if (typeof targetCanvas.gridC !== 'number') {
+                return;
+            }
+            
+            // Determine the brush type based on mouse button or event type
+            if (e.type === 'contextmenu') {
+                e.preventDefault();
+                currentBrush = ERASE_COLOR;
+                isDrawing = true;
+            } else if (e.buttons === 1 || e.type.startsWith('touch')) {
+                currentBrush = DRAW_COLOR;
+                isDrawing = true;
+            } else if (e.buttons === 2) {
+                currentBrush = ERASE_COLOR;
+                isDrawing = true;
+            }
+
+            if (!isDrawing) return;
+
+            const rect = targetCanvas.getBoundingClientRect();
+            // Calculate mouse position relative to the canvas
+            const clientX = e.clientX || e.touches?.[0]?.clientX;
+            const clientY = e.clientY || e.touches?.[0]?.clientY;
+
+            if (!clientX || !clientY) return;
+
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            // Calculate the logical tile coordinate (0 to 31) within the clicked canvas
+            const tileX = Math.floor(x / PIXEL_SIZE);
+            const tileY = Math.floor(y / PIXEL_SIZE);
+
+            // Since we draw across all canvases, we don't strictly need to check bounds here, 
+            // but for safety in case of fast mouse movements outside the grid.
+            if (tileX < 0 || tileX >= TILE_DIM || tileY < 0 || tileY >= TILE_DIM) return;
+
+            // --- Tiling/Wrapping Logic across 3x3 grid ---
+
+            // 1. Calculate the offset from the central tile (1, 1)
+            const deltaX = (targetCanvas.gridC - 1) * TILE_DIM;
+            const deltaY = (targetCanvas.gridR - 1) * TILE_DIM;
+
+            // 2. Calculate the absolute tile coordinate in the conceptual infinite grid
+            const absTileX = tileX + deltaX;
+            const absTileY = tileY + deltaY;
+
+            const drawR = BRUSH_R; 
+
+            for (let dx = -drawR; dx <= drawR; dx++) {
+                for (let dy = -drawR; dy <= drawR; dy++) {
+                    
+                    // 3. Apply brush offset to the absolute location
+                    const brushAbsX = absTileX + dx;
+                    const brushAbsY = absTileY + dy;
+
+                    // 4. Wrap the final location back to the central tile's data [0, 31]
+                    // This is the core data update logic.
+                    // (x % n + n) % n ensures correct positive modulo for negative numbers.
+                    let drawX = (brushAbsX % TILE_DIM + TILE_DIM) % TILE_DIM;
+                    let drawY = (brushAbsY % TILE_DIM + TILE_DIM) % TILE_DIM;
+
+                    // Draw only on the editor's context (the canonical data source)
+                    drawPixel(editorCtx, drawX, drawY, currentBrush);
+                }
+            }
+            
+            // Update all 8 surrounding preview canvases to show the seamless result
+            updatePreviews();
+        }
+
+        function setupCanvasListeners(canvas) {
+            // Attach mousedown/touchstart to initiate drawing
+            canvas.addEventListener('mousedown', handleDrawing);
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleDrawing(e);
+            });
+            
+            // Attach mousemove/touchmove for continuous drawing
+            canvas.addEventListener('mousemove', (e) => {
+                // Check if the left or right mouse button is currently held down
+                if (isDrawing && (e.buttons === 1 || e.buttons === 2)) {
+                    handleDrawing(e);
+                }
+            });
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (isDrawing) {
+                    handleDrawing(e);
+                }
+            });
+
+            // Handle context menu to allow right-click erase
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                // Treat right-click as an immediate erase action
+                handleDrawing(e); 
+                stopDrawing(); // Immediately stop after single click erase
+            });
+            
+            // NOTE: We no longer use mouseup, mouseleave, or touchend on the individual canvas.
+            // These are now handled globally on document.body to ensure seamless continuation.
+        }
+
+        // Apply global listeners to stop drawing reliably outside the grid area.
+        document.body.addEventListener('mouseup', stopDrawing);
+        document.body.addEventListener('touchend', stopDrawing);
+        document.body.addEventListener('touchcancel', stopDrawing);
+
+
+        // Apply local listeners to ALL 9 canvases to handle drawing
+        allCanvases.forEach(setupCanvasListeners);
+
+        // Initialize the previews right away
+        updatePreviews();
+
+    </script>
+</body>
+</html>

@@ -28,6 +28,11 @@ function init() {
     
     // Set up event listeners
     InputHandler.init();
+
+    // Initialize tilemap manager (must be after DOM and canvas setup)
+    if (typeof TilemapManager !== 'undefined') {
+        TilemapManager.init();
+    }
     
     console.log('PixlPro v3.1 initialized');
     console.log('Keyboard shortcuts:');

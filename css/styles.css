@@ -87,6 +87,22 @@ header {
     align-items: center;
 }
 
+/* Zoom display */
+.zoom-controls-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.zoom-display {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    min-width: 30px;
+    text-align: center;
+    color: var(--accent-tertiary);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.5);
+}
+
 /* BUTTONS */
 button {
     cursor: pointer;
@@ -283,6 +299,12 @@ canvas {
     pointer-events: none;
     mix-blend-mode: difference;
     opacity: 0.3;
+}
+
+#tilemap-overlay {
+    z-index: 25;
+    pointer-events: none;
+    display: none;
 }
 
 
@@ -578,11 +600,11 @@ canvas {
     transition: all 0.2s ease;
 }
 
-.setting-label:hover input ~ .checkmark {
+.setting-label:hover input~.checkmark {
     border-color: var(--accent-primary);
 }
 
-.setting-label input:checked ~ .checkmark {
+.setting-label input:checked~.checkmark {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
 }
@@ -600,7 +622,7 @@ canvas {
     transform: rotate(45deg);
 }
 
-.setting-label input:checked ~ .checkmark:after {
+.setting-label input:checked~.checkmark:after {
     display: block;
 }
 
@@ -727,9 +749,10 @@ input[type="range"]::-moz-range-track {
 }
 
 /* NUMBER INPUTS FOR LAYERS AND CANVAS SETTINGS */
-#widthInput, #heightInput, 
-input[type="number"], 
-input[type="text"], 
+#widthInput,
+#heightInput,
+input[type="number"],
+input[type="text"],
 input[type="color"] {
     background: #6b7280 !important;
     border: 1px solid #9ca3af !important;
@@ -738,8 +761,8 @@ input[type="color"] {
     padding: 4px 8px;
 }
 
-input[type="number"]:focus, 
-input[type="text"]:focus, 
+input[type="number"]:focus,
+input[type="text"]:focus,
 input[type="color"]:focus {
     background: #9ca3af !important;
     border-color: #d1d5db !important;
@@ -755,6 +778,7 @@ input[type="color"]:focus {
     width: 100%;
     min-height: 20px;
 }
+
 .right-panel {
     overflow-y: auto;
     scrollbar-width: thin;
@@ -801,4 +825,250 @@ input[type="color"]:focus {
 .tool-btn.active-tab {
     background-color: var(--bg-light);
     border-left: 2px solid var(--accent-tertiary);
+}
+
+/* Mirror Radio Button Specific Styling */
+#mirror-options .setting-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+    padding-left: 25px;
+}
+
+#mirror-options .setting-label:hover {
+    color: var(--text-primary);
+}
+
+#mirror-options .checkmark {
+    height: 16px;
+    width: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#mirror-options input[type="radio"]:checked~.checkmark {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+/* Radio Dot Styles */
+.setting-label input[type="radio"]~.checkmark::after {
+    left: 4px;
+    top: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--bg-dark);
+}
+
+/* TILEMAP PANEL STYLES */
+.tilemap-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.tilemap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 2px;
+    width: 120px;
+    height: 120px;
+    background: var(--bg-medium);
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.tilemap-square {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.tilemap-square:hover {
+    border-color: var(--accent-tertiary);
+    box-shadow: 0 0 4px rgba(0, 217, 255, 0.3);
+}
+
+.tilemap-square.active {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 6px var(--border-glow);
+    background: var(--accent-primary);
+}
+
+.tilemap-square.center {
+    background: var(--bg-light);
+    cursor: default;
+    border-color: var(--accent-tertiary);
+}
+
+.tilemap-square.center:hover {
+    border-color: var(--accent-tertiary);
+    box-shadow: none;
+}
+
+.tilemap-square.center.active {
+    background: var(--accent-tertiary);
+    border-color: var(--accent-tertiary);
+}
+
+.tilemap-square canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    display: block;
+}
+
+.tilemap-controls {
+    width: 100%;
+}
+
+.tilemap-info {
+    text-align: center;
+}
+
+/* TILEMAP SQUARES (Original) */
+.tilemap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--bg-medium);
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    /* Let the grid size adjust based on canvas dimensions */
+    width: fit-content;
+    height: fit-content;
+}
+
+.tilemap-square {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    /* Let the square size be determined by the canvas inside */
+    width: fit-content;
+    height: fit-content;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.tilemap-square:hover {
+    border-color: var(--accent-tertiary);
+    box-shadow: 0 0 4px rgba(0, 217, 255, 0.3);
+}
+
+.tilemap-square.active {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 6px var(--border-glow);
+    background: var(--accent-primary);
+}
+
+.tilemap-square.center {
+    background: var(--bg-light);
+    cursor: default;
+    border-color: var(--accent-tertiary);
+}
+
+.tilemap-square.center:hover {
+    border-color: var(--accent-tertiary);
+    box-shadow: none;
+}
+
+.tilemap-square.center.active {
+    background: var(--accent-tertiary);
+    border-color: var(--accent-tertiary);
+}
+
+.tilemap-square canvas {
+    /* Canvas will be actual pixel dimensions (e.g., 32x32) */
+    /* Let CSS handle visual scaling */
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    display: block;
+}
+
+/* SEAMLESS GRID AROUND MAIN CANVAS - UPDATED */
+.seamless-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300%;
+    /* 3x the canvas width */
+    height: 300%;
+    /* 3x the canvas height */
+    transform: translate(-33.333%, -33.333%);
+    /* Center the grid so middle cell aligns with canvas */
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 0;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.seamless-grid-overlay.enabled {
+    display: grid;
+}
+
+.seamless-grid-cell {
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seamless-grid-cell canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    display: block;
+    opacity: 0.5;
+}
+
+.seamless-grid-cell.center {
+    border: none;
+    background: transparent;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.seamless-grid-cell.center canvas {
+    display: none;
+}
+
+/* Make non-center cells interactive when in seamless mode */
+.seamless-grid-overlay.enabled .seamless-grid-cell:not(.center) {
+    pointer-events: auto;
+    cursor: crosshair;
+}
+
+.seamless-grid-overlay.enabled .seamless-grid-cell:not(.center):hover {
+    border-color: rgba(0, 255, 65, 0.5);
+}
+
+.seamless-grid-overlay.enabled .seamless-grid-cell:not(.center):hover canvas {
+    opacity: 0.7;
 }

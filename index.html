@@ -21,15 +21,27 @@
             <h1>Pixel Art</h1>
             <span class="badge">Studio Pro V1.0</span>
         </div>
-        <div class="header-controls">
-            <button id="undoBtn" class="btn icon-only" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
-            <button id="redoBtn" class="btn icon-only" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
-            <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
-            <button id="loadProjectBtn" class="btn"><i class="fas fa-folder-open"></i> Load</button>
-            <button id="saveProjectBtn" class="btn primary"><i class="fas fa-save"></i> Save</button>
-            <button id="downloadSheetBtn" class="btn"><i class="fas fa-file-export"></i> Export</button>
+      
+    <div class="header-controls">
+        <button id="undoBtn" class="btn icon-only" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+        <button id="redoBtn" class="btn icon-only" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+        
+        <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
+        
+        <div class="zoom-controls-header">
+            <button id="zoomOutBtn" class="btn icon-only" title="Zoom Out (Ctrl/-)"><i class="fas fa-minus"></i></button>
+            <span id="zoomDisplay" class="zoom-display">1x</span>
+            <button id="zoomInBtn" class="btn icon-only" title="Zoom In (Ctrl/+)"><i class="fas fa-plus"></i></button>
+            <button id="zoomResetBtn" class="btn icon-only" title="Reset Zoom (0)"><i class="fas fa-compress-arrows-alt"></i></button>
         </div>
-    </header>
+        <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
+
+        <button id="loadProjectBtn" class="btn"><i class="fas fa-folder-open"></i> Load</button>
+        <button id="saveProjectBtn" class="btn primary"><i class="fas fa-save"></i> Save</button>
+        <button id="downloadSheetBtn" class="btn"><i class="fas fa-file-export"></i> Export</button>
+    </div>
+</header>
+
 
     <!-- MAIN CONTAINER -->
     <div class="main-container">
@@ -54,6 +66,7 @@
             <div class="toolbar-spacer"></div>
             <button class="tool-btn" id="layersBtn" title="Layers (L)"><i class="fas fa-layer-group"></i></button>
             <button class="tool-btn" id="filtersBtn" title="Filters"><i class="fas fa-magic"></i></button>
+            <button class="tool-btn" id="tilemapBtn" title="Tilemap"><i class="fas fa-th-large"></i></button>
             <button class="tool-btn" id="settingsBtn" title="Settings (S)"><i class="fas fa-cog"></i></button>
         </aside>
 
@@ -66,6 +79,7 @@
                     <canvas id="layer-composition"></canvas>
                     <canvas id="previewLayer"></canvas>
                     <canvas id="grid-overlay"></canvas>
+                    <canvas id="tilemap-overlay"></canvas>
                 </div>
                 <!-- Zoom Info Overlay -->
                 <div class="zoom-overlay">
@@ -136,6 +150,32 @@
         </div>
     </div>
 
+<div id="mirror-options" class="panel-section hidden">
+    <div class="section-title">
+        <span>Mirror Axis</span>
+    </div>
+    <div class="settings-content"> 
+        <div class="setting-item">
+            <label class="setting-label">
+                <input type="radio" name="mirror-axis" id="mirrorX" value="x" checked>
+                <span class="checkmark"></span> X-axis (Left/Right)
+            </label>
+        </div>
+        <div class="setting-item">
+            <label class="setting-label">
+                <input type="radio" name="mirror-axis" id="mirrorY" value="y">
+                <span class="checkmark"></span> Y-axis (Up/Down)
+            </label>
+        </div>
+        <div class="setting-item">
+            <label class="setting-label">
+                <input type="radio" name="mirror-axis" id="mirrorBoth" value="both">
+                <span class="checkmark"></span> Both (X & Y)
+            </label>
+        </div>
+    </div>
+</div>
+
     <div id="panel-tool-options" class="panel-section">
         <div class="section-title"><span>Tools Options</span></div>
         <div style="margin-bottom:10px;">
@@ -157,14 +197,7 @@
             <input type="range" id="opacitySlider" min="0" max="100" value="100" style="width:100%;">
         </div>
         
-        <div style="margin-top:15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-            <div class="section-title"><span>Zoom</span></div>
-            <div style="display:flex; gap:5px; margin-top:8px;">
-                <button id="zoomInBtn" class="btn icon-only" title="Zoom In"><i class="fas fa-search-plus"></i></button>
-                <button id="zoomOutBtn" class="btn icon-only" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
-                <button id="zoomResetBtn" class="btn icon-only" title="Reset Zoom">100%</button>
-            </div>
-        </div>
+        
     </div>
 
     <div id="panel-layers" class="panel-section hidden">
@@ -182,6 +215,32 @@
         <div class="section-title"><span>Filters</span></div>
         <div id="filters-list" style="display: flex; flex-direction: column; gap: 8px;">
             <!-- Filter buttons will be added here -->
+        </div>
+    </div>
+
+    <div id="panel-tilemap" class="panel-section hidden">
+        <div class="section-title"><span>Tilemap Preview</span></div>
+        <div class="tilemap-container">
+            <!-- Original tilemap squares -->
+            <div class="tilemap-grid" id="tilemapGrid">
+                <!-- Tilemap squares will be generated here -->
+            </div>
+            
+            <!-- Seamless mode toggle and controls -->
+            <div class="tilemap-controls">
+                <button id="toggleSeamlessModeBtn" class="btn" style="width: 100%; margin-bottom: 8px;">
+                    <span id="toggleSeamlessModeText">Enable Seamless Grid</span>
+                </button>
+                <button id="clearTilemapBtn" class="btn secondary" style="width: 100%;">Clear All</button>
+            </div>
+            
+            <div class="tilemap-info">
+                <small style="color: var(--text-secondary); display: block; margin-top: 8px; text-align: center;">
+                    Click squares to activate tilemap preview<br>
+                    Enable seamless grid to see 3x3 tiling around canvas<br>
+                    Drawing near edges will wrap to opposite side
+                </small>
+            </div>
         </div>
     </div>
 
@@ -285,6 +344,7 @@
     <script src="js/file-manager.js"></script>
     <script src="js/ui-manager.js"></script>
     <script src="js/input-handler.js"></script>
+    <script src="js/tilemap-manager.js"></script>
     <script src="js/app.js"></script>
 </body>
 
