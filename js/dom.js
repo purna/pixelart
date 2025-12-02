@@ -7,7 +7,6 @@ const UI = {
     compositionCanvas: null,
     previewLayer: null,
     gridOverlay: null,
-    tilemapOverlay: null,
     drawingArea: null,
     wrapper: null,
     
@@ -76,11 +75,6 @@ const UI = {
     layersBtn: null,
     settingsBtn: null,
     settingsToggle: null,
-
-    // Mirror Controls
-    mirrorOptions: null,
-    mirrorX: null,
-    mirrorY: null,
     
     // Inputs
     widthInput: null,
@@ -89,7 +83,7 @@ const UI = {
 };
 
 // 2. Define global context variables (will be assigned later in initDOM)
-let ctx, pCtx, offCtx, layerCtx, prevCtx, tilemapCtx;
+let ctx, pCtx, offCtx, layerCtx, prevCtx;
 
 // 3. Initialization function to be called after DOMContentLoaded
 const initDOM = () => {
@@ -97,7 +91,6 @@ const initDOM = () => {
     UI.compositionCanvas = document.getElementById('layer-composition');
     UI.previewLayer = document.getElementById('previewLayer');
     UI.gridOverlay = document.getElementById('grid-overlay');
-    UI.tilemapOverlay = document.getElementById('tilemap-overlay');
     UI.drawingArea = document.getElementById('drawing-area');
     UI.wrapper = document.getElementById('canvas-wrapper');
     
@@ -166,13 +159,6 @@ const initDOM = () => {
     UI.layersBtn = document.getElementById('layersBtn');
     UI.settingsBtn = document.getElementById('settingsBtn');
     UI.settingsToggle = document.getElementById('settings-toggle');
-    UI.tilemapBtn = document.getElementById('tilemapBtn');
-
-    // Mirror Controls
-    UI.mirrorOptions = document.getElementById('mirror-options');
-    UI.mirrorX = document.getElementById('mirrorX');
-    UI.mirrorY = document.getElementById('mirrorY');
-    UI.mirrorBoth = document.getElementById('mirrorBoth');
     
     // Inputs
     UI.widthInput = document.getElementById('widthInput');
@@ -180,13 +166,11 @@ const initDOM = () => {
     UI.fileInput = document.getElementById('fileInput');
     
     // Initialize canvas contexts after all elements are found
-    // Use willReadFrequently for canvases that will be read often with getImageData
-    ctx = UI.compositionCanvas.getContext('2d', { willReadFrequently: true });
+    ctx = UI.compositionCanvas.getContext('2d');
     pCtx = UI.previewLayer.getContext('2d');
     offCtx = State.offscreenCanvas.getContext('2d');
     layerCtx = State.layerCanvas.getContext('2d');
-    prevCtx = UI.previewCanvas.getContext('2d', { willReadFrequently: true });
-    tilemapCtx = UI.tilemapOverlay.getContext('2d');
+    prevCtx = UI.previewCanvas.getContext('2d');
 };
 
 // 4. Function to update UI checkboxes based on settings

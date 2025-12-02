@@ -10,7 +10,7 @@ const CanvasManager = {
         State.height = Math.min(Math.max(h, Config.minSize), Config.maxSize);
         
         // Set canvas dimensions
-        [UI.compositionCanvas, UI.previewLayer, UI.tilemapOverlay].forEach(c => {
+        [UI.compositionCanvas, UI.previewLayer].forEach(c => {
             c.width = State.width;
             c.height = State.height;
         });
@@ -47,10 +47,8 @@ const CanvasManager = {
         };
     },
 
-
-
     /**
-     * Update canvas display size and grid lines based on State.zoom
+     * Update canvas zoom and viewport
      */
     updateZoom(center = false) {
         const w = State.width * State.zoom;
@@ -59,7 +57,7 @@ const CanvasManager = {
         UI.drawingArea.style.width = `${w}px`;
         UI.drawingArea.style.height = `${h}px`;
         
-        [UI.compositionCanvas, UI.previewLayer, UI.gridOverlay, UI.tilemapOverlay].forEach(el => {
+        [UI.compositionCanvas, UI.previewLayer, UI.gridOverlay].forEach(el => {
             el.style.width = '100%';
             el.style.height = '100%';
         });
@@ -70,18 +68,11 @@ const CanvasManager = {
             `linear-gradient(to right, rgba(128, 128, 128, 0.3) 1px, transparent 1px),
              linear-gradient(to bottom, rgba(128, 128, 128, 0.3) 1px, transparent 1px)` : 'none';
 
-        // NEW: Update the zoom display in the header
-        if (UI.zoomDisplay) {
-            UI.zoomDisplay.textContent = `${State.zoom}x`; // Using 'x' as per the index.html change
+        const percentage = Math.round(State.zoom * 10);
+        UI.zoomDisplay.textContent = `${percentage}%`;
+        if (UI.zoomPercentage) {
+            UI.zoomPercentage.textContent = `${percentage}%`;
         }
-        
-        // Removed the percentage calculation and UI.zoomPercentage update since
-        // the new header display uses a simple 'X' format, but keeping it if
-        // UI.zoomPercentage exists for other parts of your code.
-        // const percentage = Math.round(State.zoom * 10);
-        // if (UI.zoomPercentage) {
-        //     UI.zoomPercentage.textContent = `${percentage}%`;
-        // }
         
         if (center) {
             UI.wrapper.scrollTo(
@@ -92,8 +83,6 @@ const CanvasManager = {
         
         this.updateMinimap();
     },
-
-
 
     /**
      * Zoom in
@@ -174,16 +163,6 @@ const CanvasManager = {
         // Update preview window
         prevCtx.clearRect(0, 0, State.width, State.height);
         prevCtx.drawImage(UI.compositionCanvas, 0, 0);
-        
-        // Update tilemap preview if available
-        if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
-            TilemapManager.refresh();
-        }
-        
-        // Update seamless grid overlay if enabled
-        if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
-            this.updateSeamlessGridOverlay();
-        }
     },
     
     /**
@@ -199,16 +178,6 @@ const CanvasManager = {
     saveLayerChange() {
         AnimationManager.updateTimelineThumb(State.currentFrameIndex);
         this.render();
-        
-        // Update tilemap preview if available
-        if (typeof TilemapManager !== 'undefined' && TilemapManager.refresh) {
-            TilemapManager.refresh();
-        }
-        
-        // Update seamless grid overlay if enabled
-        if (typeof TilemapManager !== 'undefined' && TilemapManager.isSeamlessModeEnabled) {
-            this.updateSeamlessGridOverlay();
-        }
     },
     
     /**
@@ -223,7 +192,7 @@ const CanvasManager = {
         State.height = Math.min(Math.max(newHeight, Config.minSize), Config.maxSize);
 
         // Resize canvases
-        [UI.compositionCanvas, UI.previewLayer, UI.tilemapOverlay].forEach(c => {
+        [UI.compositionCanvas, UI.previewLayer].forEach(c => {
             c.width = State.width;
             c.height = State.height;
         });
@@ -276,75 +245,5 @@ const CanvasManager = {
      */
     clearPreviewLayer() {
         pCtx.clearRect(0, 0, State.width, State.height);
-    },
-
-    /**
-     * Get canvas width (delegates to State for compatibility)
-     */
-    getCanvasWidth() {
-        return State.width;
-    },
-
-    /**
-     * Get canvas height (delegates to State for compatibility)
-     */
-    getCanvasHeight() {
-        return State.height;
-    },
-
-    /**
-     * Update the seamless grid overlay with tiled pattern
-     */
-    updateSeamlessGridOverlay() {
-        const overlay = document.getElementById('seamlessGridOverlay');
-        if (!overlay || !overlay.classList.contains('enabled')) return;
-
-        try {
-            const sourceCanvas = UI.compositionCanvas;
-            if (!sourceCanvas) return;
-
-            const sourceCtx = sourceCanvas.getContext('2d');
-            if (!sourceCtx) return;
-
-            // Get canvas dimensions from CanvasManager
-            const canvasWidth = this.getCanvasWidth();
-            const canvasHeight = this.getCanvasHeight();
-
-            // Get the current image data
-            const imageData = sourceCtx.getImageData(0, 0, canvasWidth, canvasHeight);
-
-            // Update all 9 cells with the tiled pattern
-            const cells = overlay.querySelectorAll('.seamless-grid-cell');
-            cells.forEach((cell, index) => {
-                // Skip if it's the center cell (we don't want to overlay on the main canvas)
-                if (index === 4) return;
-
-                // Create a canvas element for this cell
-                let cellCanvas = cell.querySelector('canvas');
-                if (!cellCanvas) {
-                    cellCanvas = document.createElement('canvas');
-                    cell.appendChild(cellCanvas);
-                }
-
-                const cellRect = cell.getBoundingClientRect();
-                cellCanvas.width = cellRect.width;
-                cellCanvas.height = cellRect.height;
-                const cellCtx = cellCanvas.getContext('2d');
-
-                // Create a temporary canvas to scale the image
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvasWidth;
-                tempCanvas.height = canvasHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.putImageData(imageData, 0, 0);
-
-                // Scale and draw to the cell canvas
-                cellCtx.imageSmoothingEnabled = false;
-                cellCtx.drawImage(tempCanvas, 0, 0, cellRect.width, cellRect.height);
-            });
-
-        } catch (error) {
-            console.warn('Failed to update seamless grid overlay:', error);
-        }
     }
 };

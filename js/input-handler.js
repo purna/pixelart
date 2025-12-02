@@ -142,31 +142,6 @@ const InputHandler = {
             e.preventDefault();
             return;
         }
-
-        // Zoom shortcuts: Ctrl/Cmd + + / - / 0
-        if (e.ctrlKey || e.metaKey) {
-            let handled = false;
-            let newZoom = State.zoom;
-            
-            if (e.key === '+' || e.key === '=') { // Cmd/Ctrl + +
-                newZoom = State.zoom + 2;
-                handled = true;
-            } else if (e.key === '-') { // Cmd/Ctrl + -
-                newZoom = State.zoom - 2;
-                handled = true;
-            } else if (e.key === '0') { // Cmd/Ctrl + 0
-                newZoom = Config.defaultZoom;
-                handled = true;
-            }
-
-            if (handled) {
-                e.preventDefault();
-                newZoom = Math.min(Math.max(newZoom, 1), 60);
-                State.zoom = newZoom;
-                CanvasManager.updateZoom();
-                return;
-            }
-        }
         
         // Animation shortcuts
         if (key === ' ') {
@@ -215,17 +190,13 @@ const InputHandler = {
      */
     init() {
         // New Palette & Color Listeners 
-        UI.saveColorBtn.addEventListener('click', () => {
-            ColorManager.saveColorToPalette(State.color);
-            this.showNotification('Color added to palette!', 'success');
-        });
+        UI.saveColorBtn.addEventListener('click', () => ColorManager.saveColorToPalette(State.color));
         
         // NEW: URL Import Listener
         UI.importPaletteUrlBtn.addEventListener('click', () => {
             const url = prompt("Enter the Coolors URL (e.g., https://coolors.co/daffed-9bf3f0-473198-4a0d67-adfc92):");
             if (url) {
                 ColorManager.importPaletteFromUrl(url.trim());
-                this.showNotification('Palette imported!', 'success');
             }
         });
 
@@ -234,17 +205,8 @@ const InputHandler = {
         window.addEventListener('mousemove', (e) => this.onDrawMove(e));
         window.addEventListener('mouseup', (e) => this.onDrawEnd(e));
         
-        UI.previewLayer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.onDrawStart(e);
-        }, { passive: false });
-
-        window.addEventListener('touchmove', (e) => {
-            if (State.isDrawing) {
-                e.preventDefault();
-            }
-            this.onDrawMove(e);
-        }, { passive: false });
+        UI.previewLayer.addEventListener('touchstart', (e) => this.onDrawStart(e), { passive: false });
+        window.addEventListener('touchmove', (e) => this.onDrawMove(e), { passive: false });
         window.addEventListener('touchend', (e) => this.onDrawEnd(e));
 
         // Zoom
@@ -301,85 +263,34 @@ const InputHandler = {
         });
 
         // Layer controls
-        UI.addLayerBtn.addEventListener('click', () => {
-            LayerManager.addLayer();
-            this.showNotification('Layer added!', 'success');
-        });
+        UI.addLayerBtn.addEventListener('click', () => LayerManager.addLayer());
 
         // Frame controls
-        UI.addFrameBtn.addEventListener('click', () => {
-            AnimationManager.addFrame();
-            this.showNotification('Frame added!', 'success');
-        });
-        UI.duplicateFrameBtn.addEventListener('click', () => {
-            AnimationManager.duplicateFrame();
-            this.showNotification('Frame duplicated!', 'success');
-        });
-        UI.deleteFrameBtn.addEventListener('click', () => {
-            AnimationManager.deleteFrame();
-            this.showNotification('Frame deleted!', 'error');
-        });
+        UI.addFrameBtn.addEventListener('click', () => AnimationManager.addFrame());
+        UI.duplicateFrameBtn.addEventListener('click', () => AnimationManager.duplicateFrame());
+        UI.deleteFrameBtn.addEventListener('click', () => AnimationManager.deleteFrame());
 
         // Animation controls
-        UI.playBtn.addEventListener('click', () => {
-            AnimationManager.play();
-            this.showNotification('Animation started!', 'info');
-        });
-        UI.stopBtn.addEventListener('click', () => {
-            AnimationManager.stop();
-            this.showNotification('Animation stopped!', 'info');
-        });
+        UI.playBtn.addEventListener('click', () => AnimationManager.play());
+        UI.stopBtn.addEventListener('click', () => AnimationManager.stop());
 
         // Undo/Redo functionality
-        UI.undoBtn.addEventListener('click', () => {
-            this.undo();
-            this.showNotification('Action undone!', 'info');
-        });
-        UI.redoBtn.addEventListener('click', () => {
-            this.redo();
-            this.showNotification('Action redone!', 'info');
-        });
+        UI.undoBtn.addEventListener('click', () => this.undo());
+        UI.redoBtn.addEventListener('click', () => this.redo());
         
         // File operations
-        UI.saveProjectBtn.addEventListener('click', () => {
-            FileManager.saveProject();
-            this.showNotification('Project saved successfully!', 'success');
-        });
-        UI.loadProjectBtn.addEventListener('click', () => {
-            FileManager.loadProject();
-            this.showNotification('Loading project...', 'info');
-        });
-        UI.downloadSheetBtn.addEventListener('click', () => {
-            FileManager.exportSpritesheet();
-            this.showNotification('Spritesheet exported!', 'success');
-        });
+        UI.saveProjectBtn.addEventListener('click', () => FileManager.saveProject());
+        UI.loadProjectBtn.addEventListener('click', () => FileManager.loadProject());
+        UI.downloadSheetBtn.addEventListener('click', () => FileManager.exportSpritesheet());
         UI.fileInput.addEventListener('change', (e) => FileManager.handleFileLoad(e));
 
         // Zoom controls
-        if (UI.zoomInBtn && UI.zoomOutBtn && UI.zoomResetBtn) {
-            const zoomAction = (delta) => {
-                let newZoom = State.zoom + delta;
-                newZoom = Math.min(Math.max(newZoom, 1), 60);
-                State.zoom = newZoom;
-                CanvasManager.updateZoom();
-            };
-            
-            UI.zoomInBtn.addEventListener('click', () => zoomAction(2));
-            UI.zoomOutBtn.addEventListener('click', () => zoomAction(-2));
-            UI.zoomResetBtn.addEventListener('click', () => {
-                State.zoom = Config.defaultZoom;
-                CanvasManager.updateZoom();
-            });
-        }
+        UI.zoomInBtn.addEventListener('click', () => CanvasManager.zoomIn());
+        UI.zoomOutBtn.addEventListener('click', () => CanvasManager.zoomOut());
+        UI.zoomResetBtn.addEventListener('click', () => CanvasManager.zoomReset());
 
-        // Mirror Axis Controls
-        const mirrorInputs = [UI.mirrorX, UI.mirrorY, UI.mirrorBoth].filter(Boolean);
-        mirrorInputs.forEach(input => {
-            input.addEventListener('change', (e) => {
-                State.mirrorAxis = e.target.value;
-                this.showNotification(`Mirror axis set to ${e.target.value.toUpperCase()} for next use.`, 'info');
-            });
-        });
+        // Note: Layer and Settings buttons are handled by UIManager.setupContextSwitching()
+
         // Settings panel controls
         UI.applySettingsBtn.addEventListener('click', () => {
             const newWidth = parseInt(UI.widthInput.value);
@@ -392,14 +303,8 @@ const InputHandler = {
                 this.showNotification('Invalid canvas size. Must be between 4 and 128.', 'error');
             }
         });
-        UI.resetSettingsBtn.addEventListener('click', () => {
-            this.resetSetting();
-            this.showNotification('Settings reset to defaults!', 'info');
-        });
-        UI.exportSettingsBtn.addEventListener('click', () => {
-            this.exportSettings();
-            this.showNotification('Settings exported!', 'success');
-        });
+        UI.resetSettingsBtn.addEventListener('click', () => this.resetSetting());
+        UI.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
 
         // Settings checkboxes
         UI.showGrid.addEventListener('change', (e) => this.updateSetting('showGrid', e.target.checked));
@@ -418,7 +323,7 @@ const InputHandler = {
                     this.showNotification('Project saved to browser!', 'success');
                 } catch (e) {
                     console.error('Failed to save project:', e);
-                    this.showNotification('Failed to save project to browser', 'error');
+                    this.showNotification('Failed to save project', 'error');
                 }
             });
         }
@@ -430,13 +335,13 @@ const InputHandler = {
                     try {
                         const state = JSON.parse(saved);
                         this.setState(state);
-                        this.showNotification('Project loaded from browser!', 'success');
+                        this.showNotification('Project loaded!', 'success');
                     } catch (e) {
                         console.error('Failed to load project:', e);
-                        this.showNotification('Failed to load project from browser', 'error');
+                        this.showNotification('Failed to load project', 'error');
                     }
                 } else {
-                    this.showNotification('No saved project found in browser', 'info');
+                    this.showNotification('No saved project found', 'info');
                 }
             });
         }
@@ -445,9 +350,7 @@ const InputHandler = {
         window.app = {
             getState: () => this.getState(),
             setState: (state) => this.setState(state),
-            showNotification: (message, type) => this.showNotification(message, type),
-            hideNotification: () => this.hideNotification(),
-            forceHideAllNotifications: () => this.forceHideAllNotifications()
+            showNotification: (message, type) => this.showNotification(message, type)
         };
     },
 
@@ -571,6 +474,9 @@ const InputHandler = {
         this.applySettings(defaultSettings);
         this.saveSettings(defaultSettings);
         this.loadSettings(); // Refresh UI
+        
+        // Show confirmation
+        alert('Settings reset to defaults!');
     },
 
     /**
@@ -588,6 +494,7 @@ const InputHandler = {
         link.click();
         
         URL.revokeObjectURL(url);
+        alert('Settings exported successfully!');
     },
 
     /**
@@ -595,7 +502,6 @@ const InputHandler = {
      */
     loadSettings() {
         const settings = this.getStoredSettings();
-        console.log('Loading settings:', settings);
         
         // Update UI checkboxes
         UI.showGrid.checked = settings.showGrid;
@@ -604,8 +510,6 @@ const InputHandler = {
         UI.darkMode.checked = settings.darkMode;
         UI.autoSave.checked = settings.autoSave;
         UI.showCoords.checked = settings.showCoords;
-        
-        console.log('Settings loaded, checkbox states updated. showMinimap checkbox is now:', UI.showMinimap.checked);
         
         // Apply settings to application
         this.applySettings(settings);
@@ -618,7 +522,7 @@ const InputHandler = {
         const defaultSettings = {
             showGrid: true,
             snapToGrid: false,
-            showMinimap: true, // Ensure preview is visible by default
+            showMinimap: true,
             darkMode: true,
             autoSave: false,
             showCoords: true
@@ -626,12 +530,9 @@ const InputHandler = {
         
         try {
             const stored = localStorage.getItem('pixelProSettings');
-            const loadedSettings = stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
-            console.log('Retrieved settings from localStorage:', loadedSettings);
-            return loadedSettings;
+            return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
         } catch (e) {
             console.warn('Failed to load settings:', e);
-            console.log('Using default settings:', defaultSettings);
             return defaultSettings;
         }
     },
@@ -664,12 +565,7 @@ const InputHandler = {
             const minimap = document.getElementById('preview-container');
             if (minimap) {
                 minimap.style.display = settings.showMinimap ? 'flex' : 'none';
-                console.log('Preview container visibility set to:', minimap.style.display, '(showMinimap:', settings.showMinimap + ')');
-            } else {
-                console.warn('Preview container element not found when applying settings');
             }
-        } else {
-            console.warn('showMinimap setting is undefined');
         }
 
         // Coordinates visibility
@@ -752,69 +648,74 @@ const InputHandler = {
      * Show notification to user
      */
     showNotification(message, type = 'info') {
-        const existing = document.querySelector('.notification');
-        if (existing) existing.remove();
+        // Remove existing notification
+        const existing = document.getElementById('notification');
+        if (existing) {
+            existing.remove();
+        }
         
+        // Create notification element
         const notification = document.createElement('div');
-        notification.className = 'notification';
+        notification.id = 'notification';
         notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        `;
         
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';
-        notification.style.right = '20px';
-        notification.style.padding = '12px 20px';
-        notification.style.borderRadius = '4px';
-        notification.style.color = '#fff';
-        notification.style.fontSize = '12px';
-        notification.style.fontWeight = 'bold';
-        notification.style.zIndex = '10000';
-        notification.style.border = '1px solid rgba(255,255,255,0.2)';
-        notification.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
-        notification.style.transition = 'all 0.3s ease';
-        notification.style.transform = 'translateY(-20px)';
-        notification.style.opacity = '0';
-
-        const colors = { success: '#00ff41', error: '#ff006e', info: '#00d9ff' };
-        notification.style.backgroundColor = '#1a1a2e';
-        notification.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
-
+        // Set color based on type
+        switch (type) {
+            case 'success':
+                notification.style.backgroundColor = '#10b981';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#ef4444';
+                break;
+            case 'info':
+            default:
+                notification.style.backgroundColor = '#3b82f6';
+                break;
+        }
+        
+        // Add animation keyframes if not exists
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
         document.body.appendChild(notification);
-
-        requestAnimationFrame(() => {
-            notification.style.opacity = '1';
-            notification.style.transform = 'translateY(0)';
-        });
-
+        
         // Auto remove after 3 seconds
         setTimeout(() => {
-            this.hideNotification();
-        }, 3000);
-    },
-
-    /**
-     * Hide/remove notification manually
-     */
-    hideNotification() {
-        const notification = document.querySelector('.notification');
-        if (notification) {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateY(-20px)';
+            notification.style.animation = 'slideOut 0.3s ease-in';
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.remove();
                 }
             }, 300);
-        }
-    },
-
-    /**
-     * Force hide all notifications (for debugging)
-     */
-    forceHideAllNotifications() {
-        const notifications = document.querySelectorAll('.notification');
-        notifications.forEach(notification => {
-            notification.remove();
-        });
+        }, 3000);
     },
 
     /**
