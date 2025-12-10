@@ -1310,98 +1310,9 @@ input[type="color"]:focus {
 }
 
 /* ============================================= */
-/* 20. DROPINS / TABBED PANELS */
+/* 20. TABBED PANELS */
 /* ============================================= */
 
-.dropins-container {
-    width: var(--right-panel-width);
-    position: fixed;
-    top: var(--header-height);
-    height: calc(100vh - var(--header-height) - 160px);
-    box-sizing: border-box;
-    transition: all 0.3s ease-in-out;
-}
-
-.dropins-container * {
-    box-sizing: border-box;
-}
-
-.dropins-container.right {
-    right: 0;
-}
-
-.dropins-container .tabs {
-    position: absolute;
-    width: 4em;
-    left: -4em;
-}
-
-.dropins-container.right .tabs {
-    left: -4em;
-}
-
-.dropins-container .tabs .tab {
-    background-color: var(--bg-medium);
-    color: var(--text-primary);
-    padding: 10px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
-}
-
-.dropins-container.right .tabs .tab {
-    border-radius: 5px 0 0 5px;
-    border-right: 2px solid var(--border-color);
-}
-
-.dropins-container .tabs .tab:hover {
-    background-color: var(--bg-light);
-}
-
-.dropins-container .tabs .tab.active {
-    background-color: var(--accent-primary);
-    color: #000;
-}
-
-.dropins-container .tabs .tab i {
-    display: block;
-    text-align: center;
-    margin-bottom: 5px;
-    font-size: 16px;
-}
-
-.dropins-container .tabs .tab .tab-name {
-    text-align: center;
-}
-
-.dropins-container .tabs .tab .tab-name span {
-    writing-mode: vertical-lr;
-    text-orientation: sideways;
-    white-space: nowrap;
-    font-size: 10px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.dropins-container .contents {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    padding: 0;
-    height: 100%;
-    width: 100%;
-}
-
-.dropins-container .contents .content {
-    max-height: 100%;
-    display: block;
-    overflow: auto;
-}
-
-.dropins-container .contents aside.active {
-    display: block;
-}
 
 /* Panel headers and bodies */
 #layers-panel .section-header,

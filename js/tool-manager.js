@@ -324,6 +324,9 @@ const ToolManager = {
             if (State.tool === 'stroke') this.drawLine(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx, false);
             if (State.tool === 'rect') this.drawRect(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
             if (State.tool === 'circle') this.drawCircle(State.dragStart.x, State.dragStart.y, x, y, rgba, pCtx);
+        } else if (State.tool === 'move') {
+            // Show move preview during drag
+            this.showMovePreview(x, y);
         }
     },
 
@@ -350,7 +353,13 @@ const ToolManager = {
         } else if (State.tool === 'move') {
             const dx = x - State.dragStart.x;
             const dy = y - State.dragStart.y;
+
+            // Clear the preview after move is complete
+            pCtx.clearRect(0, 0, State.width, State.height);
+            pCtx.setLineDash([]);
+
             this.shiftLayer(dx, dy);
+            InputHandler.showNotification('Layer content moved!', 'success');
         }
 
         ColorManager.addToHistory(State.color);
@@ -498,6 +507,56 @@ const ToolManager = {
     },
 
     /**
+     * Show move preview during drag operation
+     */
+    showMovePreview(x, y) {
+        // Clear previous preview
+        pCtx.clearRect(0, 0, State.width, State.height);
+
+        // Calculate translation
+        const dx = x - State.dragStart.x;
+        const dy = y - State.dragStart.y;
+
+        // Get current layer data
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const data = layer.data;
+
+        // Draw semi-transparent preview of the moved content
+        pCtx.globalAlpha = 0.7;
+        pCtx.drawImage(State.layerCanvas, dx, dy);
+        pCtx.globalAlpha = 1.0;
+
+        // Draw outline around the moved content
+        pCtx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+        pCtx.lineWidth = 1;
+        pCtx.setLineDash([5, 3]);
+
+        // Find bounding box of non-transparent pixels for outline
+        let minX = State.width, minY = State.height, maxX = 0, maxY = 0;
+        let hasContent = false;
+
+        for (let y = 0; y < State.height; y++) {
+            for (let x = 0; x < State.width; x++) {
+                const index = (y * State.width + x) * 4;
+                if (data.data[index + 3] > 0) {
+                    hasContent = true;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        if (hasContent) {
+            const width = maxX - minX + 1;
+            const height = maxY - minY + 1;
+            pCtx.strokeRect(minX + dx, minY + dy, width, height);
+        }
+    },
+
+    /**
      * Shift layer content
      */
     shiftLayer(dx, dy) {
@@ -505,6 +564,172 @@ const ToolManager = {
         layerCtx.clearRect(0, 0, State.width, State.height);
         layerCtx.putImageData(data, dx, dy);
         this.updateLayerFromCtx();
+    },
+
+    /**
+     * Rotate current layer 90 degrees clockwise
+     */
+    rotateCurrentLayer() {
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const imageData = layer.data;
+        const width = State.width;
+        const height = State.height;
+
+        // Create a new ImageData for the rotated result
+        const rotatedData = new ImageData(height, width);
+
+        // Rotate 90 degrees clockwise
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const originalIndex = (y * width + x) * 4;
+                const rotatedIndex = ((width - 1 - x) * height + y) * 4;
+
+                // Copy pixel data
+                rotatedData.data[rotatedIndex] = imageData.data[originalIndex];
+                rotatedData.data[rotatedIndex + 1] = imageData.data[originalIndex + 1];
+                rotatedData.data[rotatedIndex + 2] = imageData.data[originalIndex + 2];
+                rotatedData.data[rotatedIndex + 3] = imageData.data[originalIndex + 3];
+            }
+        }
+
+        // Update layer data
+        layer.data = rotatedData;
+
+        // Update canvas and save history
+        CanvasManager.render();
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
+
+        InputHandler.showNotification('Layer rotated 90° clockwise!', 'success');
+    },
+
+    /**
+     * Flip current layer horizontally
+     */
+    flipCurrentLayer() {
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const imageData = layer.data;
+        const width = State.width;
+        const height = State.height;
+        const data = imageData.data;
+
+        // Create a new ImageData for the flipped result
+        const flippedData = new ImageData(width, height);
+        const flippedDataArray = flippedData.data;
+
+        // Flip horizontally
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const originalIndex = (y * width + x) * 4;
+                const flippedIndex = (y * width + (width - 1 - x)) * 4;
+
+                // Copy pixel data
+                flippedDataArray[flippedIndex] = data[originalIndex];
+                flippedDataArray[flippedIndex + 1] = data[originalIndex + 1];
+                flippedDataArray[flippedIndex + 2] = data[originalIndex + 2];
+                flippedDataArray[flippedIndex + 3] = data[originalIndex + 3];
+            }
+        }
+
+        // Update layer data
+        layer.data = flippedData;
+
+        // Update canvas and save history
+        CanvasManager.render();
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
+
+        InputHandler.showNotification('Layer flipped horizontally!', 'success');
+    },
+
+    /**
+     * Align current layer content to center of canvas
+     */
+    alignCurrentLayerToCenter() {
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+        const imageData = layer.data;
+        const width = State.width;
+        const height = State.height;
+        const data = imageData.data;
+
+        // Find the bounding box of non-transparent pixels
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        let hasContent = false;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = (y * width + x) * 4;
+                if (data[index + 3] > 0) { // If pixel is not transparent
+                    hasContent = true;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        if (!hasContent) {
+            InputHandler.showNotification('Layer is empty, nothing to center!', 'info');
+            return;
+        }
+
+        // Calculate current content dimensions and position
+        const contentWidth = maxX - minX + 1;
+        const contentHeight = maxY - minY + 1;
+        const centerX = Math.floor((width - contentWidth) / 2);
+        const centerY = Math.floor((height - contentHeight) / 2);
+
+        // Calculate translation needed
+        const translateX = centerX - minX;
+        const translateY = centerY - minY;
+
+        // Create a new ImageData for the centered result
+        const centeredData = new ImageData(width, height);
+        const centeredDataArray = centeredData.data;
+
+        // Clear the new image data (make it transparent)
+        for (let i = 0; i < centeredDataArray.length; i += 4) {
+            centeredDataArray[i] = 0;
+            centeredDataArray[i + 1] = 0;
+            centeredDataArray[i + 2] = 0;
+            centeredDataArray[i + 3] = 0;
+        }
+
+        // Copy pixels to centered position
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const originalIndex = (y * width + x) * 4;
+                if (data[originalIndex + 3] > 0) { // If pixel is not transparent
+                    const newX = x + translateX;
+                    const newY = y + translateY;
+
+                    if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+                        const newIndex = (newY * width + newX) * 4;
+                        centeredDataArray[newIndex] = data[originalIndex];
+                        centeredDataArray[newIndex + 1] = data[originalIndex + 1];
+                        centeredDataArray[newIndex + 2] = data[originalIndex + 2];
+                        centeredDataArray[newIndex + 3] = data[originalIndex + 3];
+                    }
+                }
+            }
+        }
+
+        // Update layer data
+        layer.data = centeredData;
+
+        // Update canvas and save history
+        CanvasManager.render();
+        if (typeof InputHandler !== 'undefined' && InputHandler.saveState) {
+            InputHandler.saveState();
+        }
+
+        InputHandler.showNotification('Layer content centered!', 'success');
     },
 
     /**
@@ -552,7 +777,21 @@ const ToolManager = {
      */
     setTool(name) {
         State.tool = name;
-        UI.toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === name));
+
+        // Handle both toolbar buttons and transform panel buttons
+        const allToolButtons = [
+            ...document.querySelectorAll('.tool-btn[data-tool]'),
+            ...document.querySelectorAll('#transform-container .tool-btn')
+        ];
+
+        allToolButtons.forEach(b => b.classList.toggle('active', b.dataset.tool === name || b.id === name + 'Btn'));
+
+        // Special handling for transform tools
+        if (name === 'move') {
+            // Highlight both move buttons (toolbar and transform panel)
+            const moveButtons = document.querySelectorAll('#moveBtn');
+            moveButtons.forEach(btn => btn.classList.add('active'));
+        }
 
         // When selecting the brush tool, ensure blur value is at least 1
         if (name === 'brush' && State.brushBlur < 1) {

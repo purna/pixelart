@@ -832,6 +832,46 @@ const InputHandler = {
             });
         }
 
+        // Add event listeners for transform buttons
+        if (UI.rotateBtn) {
+            UI.rotateBtn.addEventListener('click', (e) => {
+                console.log('Rotate button clicked');
+                ToolManager.rotateCurrentLayer();
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
+        // Add event listener for move button in transform panel
+        const transformMoveBtn = document.getElementById('moveBtn');
+        if (transformMoveBtn && !transformMoveBtn.dataset.tool) {
+            // Only add event listener if it's the transform panel move button (not the toolbar one)
+            transformMoveBtn.addEventListener('click', (e) => {
+                console.log('Transform move button clicked');
+                ToolManager.setTool('move');
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
+        if (UI.flipBtn) {
+            UI.flipBtn.addEventListener('click', (e) => {
+                console.log('Flip button clicked');
+                ToolManager.flipCurrentLayer();
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
+        if (UI.alignCenterBtn) {
+            UI.alignCenterBtn.addEventListener('click', (e) => {
+                console.log('Align center button clicked');
+                ToolManager.alignCurrentLayerToCenter();
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
         // Add specific handler for eyedropper tool button to ensure it works
         const eyedropperToolBtn = document.querySelector('.tool-btn[data-tool="eyedropper"]');
         if (eyedropperToolBtn) {

@@ -3,145 +3,147 @@
 /* ============================================= */
 
 
-    .dropins-container {
-        width: var(--right-panel-width);
-        position: fixed;
-        top: var(--header-height);
-        height: calc(100vh - var(--header-height));
-        box-sizing: border-box;
-        transition: right 0.3s ease-in-out;
-        z-index: 1000;
-    }
+.dropins-container {
+    width: var(--right-panel-width);
+    position: fixed;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height) - 160px);
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+}
 
-    .dropins-container * {
-        box-sizing: border-box;
-    }
+.dropins-container * {
+    box-sizing: border-box;
+}
 
-    .dropins-container .tabs {
-        position: absolute;
-        width: 2em;
-    }
+.dropins-container.right {
+    right: 0;
+}
 
-    .dropins-container .tabs .tab {
-        background-color: var(--bg-medium);
-        color: var(--text-primary);
-        padding: 10px;
+.dropins-container.right.closed {
+    right: -280px;
+}
 
-        margin: 10px 0 5px 0;
-        cursor: pointer;
-        -webkit-touch-callout: none;
-        /* iOS Safari */
-        -webkit-user-select: none;
-        /* Safari */
-        -moz-user-select: none;
-        /* Firefox */
-        -ms-user-select: none;
-        /* Internet Explorer/Edge */
-        user-select: none;
-        /* Non-prefixed version, currently
-             supported by Chrome and Opera */
-    }
+.dropins-container .tabs {
+    position: absolute;
+    width: 4em;
+    margin-top: 10px;
+}
 
-    .dropins-container .tabs .tab:hover {
-        background-color: var(--bg-light);
-    }
+.dropins-container.right .tabs {
+    left: -2em;
+}
 
-    .dropins-container .tabs .tab .shortcut {
-        text-align: center;
-        font-size: 0.8em;
-        margin-bottom: 0.4em;
-    }
+.dropins-container .tabs .tab {
+    background-color: var(--bg-medium);
+    color: var(--text-primary);
+    padding: 10px;
+    margin: 0 0 5px 0;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    transition: all 0.2s ease;
+}
 
-    .dropins-container .tabs .tab .tab-name {
-        text-align: center;
-    }
+.dropins-container.right .tabs .tab {
+    border-radius: 5px 0 0 5px;
+    border-right: 2px solid var(--border-color);
+}
 
-    .dropins-container .tabs .tab .tab-name span {
-        writing-mode: vertical-lr;
-        text-orientation: sideways;
-        white-space: nowrap;
-    }
+.dropins-container .tabs .tab:hover {
+    background-color: var(--bg-light);
+}
 
-    .dropins-container .tabs .tab.active {
-        background-color: var(--accent-primary);
-        color: #000;
-    }
+.dropins-container .tabs .tab.active {
+    background-color: var(--accent-primary);
+    color: #000;
+}
 
-    .dropins-container .contents {
-        background-color: var(--bg-dark);
-        color: var(--text-primary);
-        padding: 0;
-        height: 100%;
-    }
+.dropins-container .tabs .tab i {
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
 
-    .dropins-container .contents .content {
-        max-height: 100%;
-        overflow: auto;
-        display: none;
-    }
+.dropins-container .tabs .tab .shortcut {
+    text-align: center;
+    font-size: 0.8em;
+    margin-bottom: 0.4em;
+}
 
-    .dropins-container .contents .content.active {
-        display: block;
-    }
+.dropins-container .tabs .tab .tab-name {
+    text-align: center;
+}
 
-    .dropins-container.right {
-        right: 0; /* Start visible */
-        transition: right 0.3s ease-in-out;
-    }
+.dropins-container .tabs .tab .tab-name span {
+    writing-mode: vertical-lr;
+    text-orientation: sideways;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
-    .dropins-container.right .tabs {
-        left: -2em;
-    }
+.dropins-container.right .tabs .tab-label {
+    display: none;
+}
 
+.dropins-container .contents {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
 
-    .dropins-container.right .tabs .tab-label{
-        display: none;
-    }
+.dropins-container .contents .content {
+    max-height: 100%;
+    display: none;
+    overflow: auto;
+}
 
-    
+.dropins-container .contents .content.active {
+    display: block;
+}
 
-    .dropins-container.right .tabs .tab {
-        border-radius: 5px 0 0 5px;
-        border-right: 2px solid var(--border-color);
-    }
+.dropins-container .contents aside.active {
+    display: block;
+}
 
+/* Panel Toggle Button */
+#panel-toggle {
+    position: fixed;
+    right: 280px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    padding: 10px 4px;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    z-index: 100;
+    color: var(--accent-tertiary);
+    transition: right 0.3s ease-in-out, transform 0.2s ease;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+}
 
-    .dropins-container.right.closed {
-        right: -280px; /* Move off-screen to the right when closed - using hardcoded value */
-    }
+#panel-toggle.closed-toggle,
+.dropins-container.right.closed ~ #panel-toggle {
+    right: 0;
+}
 
-    /* Ensure the panel toggle button moves with the container */
-    #panel-toggle {
-        position: fixed;
-        right: 280px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--bg-dark);
-        border: 1px solid var(--border-color);
-        border-right: none;
-        padding: 10px 4px;
-        border-radius: 8px 0 0 8px;
-        cursor: pointer;
-        z-index: 100;
-        color: var(--accent-tertiary);
-        transition: right 0.3s ease-in-out, transform 0.2s ease;
-        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    }
-
-    /* When container is closed, move button to edge of screen */
-    .dropins-container.right.closed ~ #panel-toggle {
-        right: 0;
-    }
-
-    #panel-toggle.closed-toggle {
-        right: 0;
-    }
-
-    #panel-toggle:hover {
-        background: var(--bg-medium);
-        transform: translateY(-50%) scale(1.1);
-        box-shadow: -2px 0 12px rgba(0, 217, 255, 0.3);
-    }
+#panel-toggle:hover {
+    background: var(--bg-medium);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: -2px 0 12px rgba(0, 217, 255, 0.3);
+}
 
   
 

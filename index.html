@@ -202,6 +202,12 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
             <i class="fas fa-layer-group"></i>
             <span class="tab-name tab-label">Layers</span>
         </button>
+
+         <button class="tab panel-tab" data-tab="transform" title="Transform" data-content="transform-panel">
+           <i class="fa-solid fa-arrows-up-down-left-right"></i>
+            <span class="tab-name tab-label">Transform</span>
+        </button>
+
         <button class="tab panel-tab" data-tab="tilemap" title="Tilemap" data-content="tilemap-panel">
             <i class="fas fa-th"></i>
             <span class="tab-name tab-label">Tilemap</span>
@@ -323,31 +329,7 @@ Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
                     </div>
                 </div>
 
-                <div id="panel-transform" class="panel-section">
-                    <div class="section-header">
-                        <div class="label-group">
-                            <span>Transform</span>
-                        </div>
-                         <div class="layer-controls">
-                            <button class="section-toggle" data-target="transform-container" title="Toggle Transform Section">
-                                <i class="fas fa-minus"></i>
-                            </button>
-
-                        </div>
-                    </div>
-                    <div class="section-body">
-                        <div id="transform-container">
-                            <button class="tool-btn" data-tool="move" title="Move (M)"><i
-                                    class="fas fa-arrows-alt"></i></button>
-                            <button class="tool-btn" id="rotateBtn" title="RotatecClockwise (L)"><i
-                                    class="fas fa-rotate"></i></button>
-                            <button class="tool-btn" id="flipBtn" title="Flip Horizontal"><i
-                                    class="fas fa-flipboard"></i></button>
-                            <button class="tool-btn" id="alignCenterBtn" title="Aligh Center (S)"><i
-                                    class="fas fa-align-center"></i></button>
-                        </div>
-                    </div>
-                </div>
+          
 
                 <div id="panel-effects" class="panel-section">
                     <div class="section-header">
@@ -498,6 +480,36 @@ Invert all colors" data-content="filters-list"><i class="fas fa-magic"></i></but
           
             </div>
 
+
+        </aside>
+
+        <aside class="content panel-tab-content" data-tab-content="transform" id="transform-panel">
+            <div>
+                 <div id="transform-panel" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Transform</span>
+                        </div>
+                         <div class="layer-controls">
+                            <button class="section-toggle" data-target="transform-container" title="Toggle Transform Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="transform-container">
+                            <button class="tool-btn" id="moveBtn" data-tool="move" title="Move (M)"><i
+                                    class="fas fa-arrows-alt"></i></button>
+                            <button class="tool-btn" id="rotateBtn" title="RotatecClockwise (L)"><i
+                                    class="fas fa-rotate"></i></button>
+                            <button class="tool-btn" id="flipBtn" title="Flip Horizontal"><i class="fa-brands fa-flipboard"></i></button>
+                            <button class="tool-btn" id="alignCenterBtn" title="Aligh Center (S)"><i class="fa-solid fa-arrows-to-dot"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
 
         </aside>
 
