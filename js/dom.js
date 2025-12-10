@@ -78,6 +78,13 @@ const UI = {
     layersBtn: null,
     settingsBtn: null,
     settingsToggle: null,
+    tilemapBtn: null,
+    filtersBtn: null,
+    rotateBtn: null,
+    flipBtn: null,
+    alignCenterBtn: null,
+    closeLayersPanelBtn: null,
+    closeTilemapPanelBtn: null,
 
     // Mirror Controls
     mirrorOptions: null,
@@ -133,16 +140,18 @@ const initDOM = () => {
     
     // Panel elements
     UI.sidePanel = document.getElementById('side-panel');
+    UI.layersPanel = document.getElementById('layers-panel');
+    UI.tilemapPanel = document.getElementById('tilemap-panel');
     
-    // Settings panel elements
-    UI.showGrid = document.getElementById('showGrid');
-    UI.snapToGrid = document.getElementById('snapToGrid');
-    UI.showMinimap = document.getElementById('showMinimap');
-    UI.darkMode = document.getElementById('darkMode');
-    UI.autoSave = document.getElementById('autoSave');
-    UI.showCoords = document.getElementById('showCoords');
-    UI.applySettingsBtn = document.getElementById('apply-settings');
-    UI.resetSettingsBtn = document.getElementById('resetSettingsBtn');
+    // Settings panel elements - use new modal-based checkbox IDs
+    UI.showGrid = document.getElementById('setting-grid');
+    UI.snapToGrid = document.getElementById('setting-snap-to-grid');
+    UI.showMinimap = document.getElementById('setting-show-minimap');
+    UI.darkMode = document.getElementById('setting-darkmode');
+    UI.autoSave = document.getElementById('setting-autosave');
+    UI.showCoords = document.getElementById('setting-show-coords');
+    UI.applySettingsBtn = document.getElementById('btn-settings-save');
+    UI.resetSettingsBtn = document.getElementById('btn-settings-reset');
     UI.exportSettingsBtn = document.getElementById('exportSettingsBtn');
     UI.saveToBrowserBtn = document.getElementById('saveToBrowserBtn');
     UI.loadFromBrowserBtn = document.getElementById('loadFromBrowserBtn');
@@ -171,6 +180,12 @@ const initDOM = () => {
     UI.settingsBtn = document.getElementById('settingsBtn');
     UI.settingsToggle = document.getElementById('settings-toggle');
     UI.tilemapBtn = document.getElementById('tilemapBtn');
+    UI.filtersBtn = document.getElementById('filtersBtn');
+    UI.rotateBtn = document.getElementById('rotateBtn');
+    UI.flipBtn = document.getElementById('flipBtn');
+    UI.alignCenterBtn = document.getElementById('alignCenterBtn');
+    UI.closeLayersPanelBtn = document.getElementById('close-layers-panel');
+    UI.closeTilemapPanelBtn = document.getElementById('close-tilemap-panel');
 
     // Mirror Controls
     UI.mirrorOptions = document.getElementById('mirror-options');
@@ -195,11 +210,17 @@ const initDOM = () => {
 
 // 4. Function to update UI checkboxes based on settings
 const updateSettingsUI = (settings) => {
-    // Update UI checkboxes
-    UI.showGrid.checked = settings.showGrid;
-    UI.snapToGrid.checked = settings.snapToGrid;
-    UI.showMinimap.checked = settings.showMinimap;
-    UI.darkMode.checked = settings.darkMode;
-    UI.autoSave.checked = settings.autoSave;
-    UI.showCoords.checked = settings.showCoords;
+    // Skip if SettingsManager is handling settings
+    if (typeof SettingsManager !== 'undefined') {
+        console.log('SettingsManager is handling settings UI updates, skipping DOM updates');
+        return;
+    }
+
+    // Update UI checkboxes - use new modal-based checkbox IDs
+    if (UI.showGrid) UI.showGrid.checked = settings.showGrid;
+    if (UI.snapToGrid) UI.snapToGrid.checked = settings.snapToGrid;
+    if (UI.showMinimap) UI.showMinimap.checked = settings.showMinimap;
+    if (UI.darkMode) UI.darkMode.checked = settings.darkMode;
+    if (UI.autoSave) UI.autoSave.checked = settings.autoSave;
+    if (UI.showCoords) UI.showCoords.checked = settings.showCoords;
 };

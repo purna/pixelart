@@ -22,21 +22,15 @@ function init() {
     AnimationManager.renderTimeline();
     FilterManager.initFilters();
 
-    // Initialize UI management
-    UIManager.init();
-
-    // Initialize Settings Manager
+    // Initialize Settings Manager first
     if (typeof SettingsManager !== 'undefined') {
         SettingsManager.init();
     }
 
-    // Initialize tutorial system
-    if (typeof TutorialSystem !== 'undefined') {
-        app.tutorialSystem = new TutorialSystem(app);
-        app.tutorialSystem.init();
-    }
+    // Initialize UI management
+    UIManager.init();
 
-    // Load user settings using the new SettingsManager
+    // Load user settings using the new SettingsManager first
     if (typeof SettingsManager !== 'undefined') {
         SettingsManager.loadSettings();
     } else {
@@ -44,6 +38,12 @@ function init() {
         if (typeof InputHandler !== 'undefined') {
             InputHandler.loadSettings();
         }
+    }
+
+    // Initialize tutorial system after settings are loaded
+    if (typeof TutorialSystem !== 'undefined') {
+        app.tutorialSystem = new TutorialSystem(app);
+        app.tutorialSystem.init();
     }
 
     // Save initial state for undo/redo

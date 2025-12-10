@@ -9,6 +9,8 @@ const SettingsManager = {
         showGrid: true,
         showTooltips: true,
         showHelpers: true,
+        showMinimap: true,
+        snapToGrid: false,
         darkMode: true,
         autoSave: true,
         backgroundEnabled: true,
@@ -134,8 +136,10 @@ const SettingsManager = {
         const exportResolutionSelect = document.getElementById('setting-export-resolution');
         const customWidthInput = document.getElementById('setting-custom-width');
         const customHeightInput = document.getElementById('setting-custom-height');
-        const enableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
-        const showTutorialHintsCheckbox = document.getElementById('showTutorialHints');
+        const enableTutorialsCheckbox = document.getElementById('settings-enable-tutorials');
+        const showTutorialHintsCheckbox = document.getElementById('settings-show-hints');
+        const showMinimapCheckbox = document.getElementById('setting-show-minimap');
+        const snapToGridCheckbox = document.getElementById('setting-snap-to-grid');
 
         if (gridCheckbox) gridCheckbox.checked = this.settings.showGrid;
         if (tooltipsCheckbox) tooltipsCheckbox.checked = this.settings.showTooltips;
@@ -152,6 +156,8 @@ const SettingsManager = {
         if (customHeightInput) customHeightInput.value = this.settings.customHeight;
         if (enableTutorialsCheckbox) enableTutorialsCheckbox.checked = this.settings.enableTutorials;
         if (showTutorialHintsCheckbox) showTutorialHintsCheckbox.checked = this.settings.showTutorialHints;
+        if (showMinimapCheckbox) showMinimapCheckbox.checked = this.settings.showMinimap;
+        if (snapToGridCheckbox) snapToGridCheckbox.checked = this.settings.snapToGrid;
     },
 
     closeSettings() {
@@ -175,13 +181,23 @@ const SettingsManager = {
             tabButtons.forEach(button => {
                 if (button.classList.contains('active')) {
                     hasActiveTab = true;
+                    // Also ensure the corresponding content is active
+                    const contentId = button.dataset.content;
+                    const content = document.getElementById(contentId);
+                    if (content) {
+                        content.classList.add('active');
+                    }
                 }
             });
 
             // If no tab is active, activate the first one
-            if (!hasActiveTab && tabButtons[0] && tabContents[0]) {
+            if (!hasActiveTab && tabButtons[0]) {
                 tabButtons[0].classList.add('active');
-                tabContents[0].classList.add('active');
+                const contentId = tabButtons[0].dataset.content;
+                const content = document.getElementById(contentId);
+                if (content) {
+                    content.classList.add('active');
+                }
             }
         }
     },
@@ -221,7 +237,7 @@ const SettingsManager = {
 
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
-                const tabId = button.dataset.tab;
+                const contentId = button.dataset.content;
 
                 // Remove active class from all tabs and content
                 tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -229,7 +245,7 @@ const SettingsManager = {
 
                 // Add active class to clicked tab and corresponding content
                 button.classList.add('active');
-                const content = document.querySelector(`.settings-tab-content[data-tab-content="${tabId}"]`);
+                const content = document.getElementById(contentId);
                 if (content) {
                     content.classList.add('active');
                 }
@@ -266,8 +282,10 @@ const SettingsManager = {
         const exportResolutionSelect = document.getElementById('setting-export-resolution');
         const customWidthInput = document.getElementById('setting-custom-width');
         const customHeightInput = document.getElementById('setting-custom-height');
-        const enableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
-        const showTutorialHintsCheckbox = document.getElementById('showTutorialHints');
+        const enableTutorialsCheckbox = document.getElementById('settings-enable-tutorials');
+        const showTutorialHintsCheckbox = document.getElementById('settings-show-hints');
+        const showMinimapCheckbox = document.getElementById('setting-show-minimap');
+        const snapToGridCheckbox = document.getElementById('setting-snap-to-grid');
 
         this.settings.showGrid = gridCheckbox ? gridCheckbox.checked : true;
         this.settings.showTooltips = tooltipsCheckbox ? tooltipsCheckbox.checked : true;
@@ -284,6 +302,8 @@ const SettingsManager = {
         this.settings.customHeight = customHeightInput ? parseInt(customHeightInput.value) : 1080;
         this.settings.enableTutorials = enableTutorialsCheckbox ? enableTutorialsCheckbox.checked : true;
         this.settings.showTutorialHints = showTutorialHintsCheckbox ? showTutorialHintsCheckbox.checked : true;
+        this.settings.showMinimap = showMinimapCheckbox ? showMinimapCheckbox.checked : true;
+        this.settings.snapToGrid = snapToGridCheckbox ? snapToGridCheckbox.checked : false;
 
         // Apply settings
         this.applySettings();
@@ -304,6 +324,8 @@ const SettingsManager = {
                 showGrid: true,
                 showTooltips: true,
                 showHelpers: true,
+                showMinimap: true,
+                snapToGrid: false,
                 darkMode: true,
                 autoSave: true,
                 backgroundEnabled: true,
@@ -342,6 +364,18 @@ const SettingsManager = {
             document.body.classList.add('light-theme');
         }
 
+        // Apply grid visibility
+        const gridOverlay = document.getElementById('grid-overlay');
+        if (gridOverlay) {
+            gridOverlay.style.display = this.settings.showGrid ? 'block' : 'none';
+        }
+
+        // Apply minimap visibility
+        const previewContainer = document.getElementById('preview-container');
+        if (previewContainer) {
+            previewContainer.style.display = this.settings.showMinimap ? 'flex' : 'none';
+        }
+
         // Apply auto-save setting (check if FileManager has the methods)
         if (this.settings.autoSave) {
             if (typeof FileManager !== 'undefined' && typeof FileManager.startAutoSave === 'function') {
@@ -358,6 +392,15 @@ const SettingsManager = {
             document.body.style.backgroundColor = this.settings.backgroundColor;
         } else {
             document.body.style.backgroundColor = '';
+        }
+
+        // Apply ambient light settings
+        if (this.settings.ambientLight) {
+            // Apply ambient light effect if supported
+            document.body.style.setProperty('--ambient-light-color', this.settings.ambientColor);
+            document.body.classList.add('ambient-light-enabled');
+        } else {
+            document.body.classList.remove('ambient-light-enabled');
         }
 
         console.log('Settings applied:', this.settings);

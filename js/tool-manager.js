@@ -24,28 +24,67 @@ const ToolManager = {
             if ((Math.floor(x) + Math.floor(y)) % 2 !== 0) return;
         }
 
-        context.fillStyle = isEraser ? 'rgba(0,0,0,1)' : colorStr;
-        context.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+        if (isEraser) {
+            // Eraser with blur support for partial pixel erasing
+            if (State.brushBlur > 0 && State.tool === 'eraser') {
+                // Use soft eraser with transparency gradient
+                const centerX = Math.floor(x);
+                const centerY = Math.floor(y);
+                const radius = Math.floor(size / 2);
 
-        if (State.tool === 'brush') {
-            // Brush tool - use circular brush with blur for soft edges
-            const centerX = Math.floor(x);
-            const centerY = Math.floor(y);
-            const radius = Math.floor(size / 2);
-            
-            // Create radial gradient for soft brush effect
-            const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
-            gradient.addColorStop(0, colorStr);
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            
-            context.fillStyle = gradient;
-            context.beginPath();
-            context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
-            context.fill();
+                // Create radial gradient for soft eraser effect
+                const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
+                gradient.addColorStop(0, 'rgba(0,0,0,1)'); // Full erasure at center
+                gradient.addColorStop(1, 'rgba(0,0,0,0)'); // No erasure at edges
+
+                context.fillStyle = gradient;
+                context.globalCompositeOperation = 'destination-out';
+                context.beginPath();
+                context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
+                context.fill();
+            } else {
+                // Standard hard eraser
+                context.fillStyle = 'rgba(0,0,0,1)';
+                context.globalCompositeOperation = 'destination-out';
+                const offset = Math.floor(size / 2);
+                context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
+            }
         } else {
-            // Pencil, eraser, and other tools - use standard square drawing
-            const offset = Math.floor(size / 2);
-            context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
+            // Normal drawing tools
+            context.fillStyle = colorStr;
+            context.globalCompositeOperation = 'source-over';
+
+            if (State.tool === 'brush') {
+                // Brush tool - use circular brush with blur for soft edges
+                const centerX = Math.floor(x);
+                const centerY = Math.floor(y);
+                const radius = Math.floor(size / 2);
+
+                // Create radial gradient for soft brush effect
+                const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
+                gradient.addColorStop(0, colorStr);
+   
+                // Extract RGB values from colorStr and create transparent version
+                const rgbaMatch = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                if (rgbaMatch) {
+                    const r = parseInt(rgbaMatch[1]);
+                    const g = parseInt(rgbaMatch[2]);
+                    const b = parseInt(rgbaMatch[3]);
+                    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                } else {
+                    // Fallback to transparent black if color parsing fails
+                    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                }
+
+                context.fillStyle = gradient;
+                context.beginPath();
+                context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
+                context.fill();
+            } else {
+                // Pencil and other tools - use standard square drawing
+                const offset = Math.floor(size / 2);
+                context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
+            }
         }
     },
 
@@ -85,8 +124,14 @@ const ToolManager = {
      * Draw a circle using midpoint algorithm
      */
     drawCircle(x0, y0, x1, y1, color, ctx) {
+        // Calculate radius from distance between center and edge points
         let r = Math.floor(Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)));
-        let x = r, y = 0, P = 1 - r;
+        // Ensure minimum radius of 1 pixel
+        r = Math.max(1, r);
+
+        let x = 0;
+        let y = r;
+        let d = 3 - 2 * r;
 
         const plotSym = (cx, cy, x, y) => {
             this.plot(cx + x, cy + y, color, ctx);
@@ -99,11 +144,18 @@ const ToolManager = {
             this.plot(cx - y, cy - x, color, ctx);
         };
 
-        while (x > y) {
-            y++;
-            if (P <= 0) P = P + 2 * y + 1;
-            else { x--; P = P + 2 * y - 2 * x + 1; }
-            if (x < y) break;
+        plotSym(x0, y0, x, y);
+
+        while (y >= x) {
+            x++;
+
+            if (d > 0) {
+                y--;
+                d = d + 4 * (x - y) + 10;
+            } else {
+                d = d + 4 * x + 6;
+            }
+
             plotSym(x0, y0, x, y);
         }
     },
@@ -213,11 +265,17 @@ const ToolManager = {
             this.plot(x, y, rgba, layerCtx, State.tool === 'eraser');
             CanvasManager.render(); // Instant update for small tools
         } else if (State.tool === 'bucket') {
+            console.log('Fill tool activated at:', x, y, 'with color:', State.color);
             this.floodFill(x, y, State.color, State.opacity);
+            State.isDrawing = false; // Fill tool completes immediately
+            console.log('Fill tool completed');
+            return; // Don't continue with normal drawing flow
         } else if (State.tool === 'eyedropper') {
+            console.log('Eyedropper tool activated at:', x, y);
             this.pickColor(x, y);
             State.isDrawing = false;
             this.setTool('pencil');
+            console.log('Eyedropper tool completed, color set to:', State.color);
         } else if (State.tool === 'move') {
             // Do nothing on start, wait for move
         } else if (State.tool === 'mirror') {
@@ -323,7 +381,7 @@ const ToolManager = {
     },
 
     /**
-     * Flood fill algorithm
+     * Flood fill algorithm with improved performance and edge case handling
      */
     floodFill(x, y, colorHex, opacity) {
         const layer = State.frames[State.currentFrameIndex].layers[State.activeLayerIndex];
@@ -340,39 +398,93 @@ const ToolManager = {
         const sb = data.data[startPos + 2];
         const sa = data.data[startPos + 3];
 
-        if (sr === r && sg === g && sb === b && sa === a) return;
+        // Don't fill if already the target color (with some tolerance for alpha)
+        if (sr === r && sg === g && sb === b && Math.abs(sa - a) < 10) return;
 
-        const match = (p) => {
-            return data.data[p] === sr && data.data[p + 1] === sg &&
-                data.data[p + 2] === sb && data.data[p + 3] === sa;
+        // Use a more efficient scanline algorithm instead of stack-based
+        const width = State.width;
+        const height = State.height;
+        const pixels = data.data;
+        const visited = new Uint8Array(width * height); // More efficient than Set for this use case
+
+        // Convert coordinates to index
+        const toIndex = (x, y) => y * width + x;
+
+        // Check if pixel matches the target color (with alpha tolerance)
+        const matchColor = (x, y) => {
+            if (x < 0 || x >= width || y < 0 || y >= height) return false;
+
+            const idx = toIndex(x, y) * 4;
+            // Check RGB exactly, but allow some tolerance for alpha
+            return pixels[idx] === sr &&
+                   pixels[idx + 1] === sg &&
+                   pixels[idx + 2] === sb &&
+                   Math.abs(pixels[idx + 3] - sa) < 10;
         };
 
-        const stack = [[x, y]];
-        const visited = new Set(); // Prevent infinite loops
+        // Scanline flood fill algorithm
+        const stack = [];
+        stack.push({x, y});
 
         while (stack.length) {
-            const [cx, cy] = stack.pop();
+            const {x: cx, y: cy} = stack.pop();
+            const idx = toIndex(cx, cy);
 
-            // Skip if out of bounds
-            if (cx < 0 || cx >= State.width || cy < 0 || cy >= State.height) continue;
+            // Skip if already processed
+            if (visited[idx]) continue;
+            visited[idx] = 1;
 
-            const pos = (cy * State.width + cx) * 4;
-            const posKey = `${cx},${cy}`;
+            // Skip if doesn't match target color
+            if (!matchColor(cx, cy)) continue;
 
-            // Skip if already visited
-            if (visited.has(posKey)) continue;
-            visited.add(posKey);
+            // Fill current pixel
+            const pixelIdx = idx * 4;
+            pixels[pixelIdx] = r;
+            pixels[pixelIdx + 1] = g;
+            pixels[pixelIdx + 2] = b;
+            pixels[pixelIdx + 3] = a;
 
-            if (match(pos)) {
-                data.data[pos] = r;
-                data.data[pos + 1] = g;
-                data.data[pos + 2] = b;
-                data.data[pos + 3] = a;
+            // Scan left
+            let x1 = cx - 1;
+            while (x1 >= 0 && matchColor(x1, cy)) {
+                const leftIdx = toIndex(x1, cy);
+                if (!visited[leftIdx]) {
+                    visited[leftIdx] = 1;
+                    const leftPixelIdx = leftIdx * 4;
+                    pixels[leftPixelIdx] = r;
+                    pixels[leftPixelIdx + 1] = g;
+                    pixels[leftPixelIdx + 2] = b;
+                    pixels[leftPixelIdx + 3] = a;
+                }
+                x1--;
+            }
 
-                stack.push([cx - 1, cy]);
-                stack.push([cx + 1, cy]);
-                stack.push([cx, cy - 1]);
-                stack.push([cx, cy + 1]);
+            // Scan right
+            let x2 = cx + 1;
+            while (x2 < width && matchColor(x2, cy)) {
+                const rightIdx = toIndex(x2, cy);
+                if (!visited[rightIdx]) {
+                    visited[rightIdx] = 1;
+                    const rightPixelIdx = rightIdx * 4;
+                    pixels[rightPixelIdx] = r;
+                    pixels[rightPixelIdx + 1] = g;
+                    pixels[rightPixelIdx + 2] = b;
+                    pixels[rightPixelIdx + 3] = a;
+                }
+                x2++;
+            }
+
+            // Check lines above and below for new seed pixels
+            for (let x = x1 + 1; x < x2; x++) {
+                // Check line above
+                if (cy > 0 && matchColor(x, cy - 1) && !visited[toIndex(x, cy - 1)]) {
+                    stack.push({x, y: cy - 1});
+                }
+
+                // Check line below
+                if (cy < height - 1 && matchColor(x, cy + 1) && !visited[toIndex(x, cy + 1)]) {
+                    stack.push({x, y: cy + 1});
+                }
             }
         }
 
@@ -399,17 +511,38 @@ const ToolManager = {
      * Pick color from canvas
      */
     pickColor(x, y) {
+        console.log('pickColor called at:', x, y);
+        // Use the composition canvas context to read pixel data
+        const compositionCanvas = document.getElementById('layer-composition');
+        if (!compositionCanvas) {
+            console.error('Composition canvas not found');
+            return;
+        }
+        const ctx = compositionCanvas.getContext('2d');
+        if (!ctx) {
+            console.error('Could not get 2D context from composition canvas');
+            return;
+        }
+
         const p = ctx.getImageData(x, y, 1, 1).data;
-        if (p[3] === 0) return;
+        console.log('Pixel data at', x, y, ':', p);
+        if (p[3] === 0) {
+            console.log('Transparent pixel, not picking color');
+            return;
+        }
 
         const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
         const alpha = (p[3] / 255).toFixed(2);
+        console.log('Picked color:', hex, 'with alpha:', alpha);
 
         State.color = hex;
         State.opacity = parseFloat(alpha);
         UI.colorPicker.value = hex;
         UI.colorHex.textContent = hex;
         UI.opacitySlider.value = alpha;
+
+        // Add the picked color to the palette
+        ColorManager.addToHistory(hex);
 
         this.setTool('pencil');
     },
@@ -420,5 +553,260 @@ const ToolManager = {
     setTool(name) {
         State.tool = name;
         UI.toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === name));
+
+        // When selecting the brush tool, ensure blur value is at least 1
+        if (name === 'brush' && State.brushBlur < 1) {
+            State.brushBlur = 1;
+            // Update the UI to reflect the change
+            if (UI.blurSlider) {
+                UI.blurSlider.value = 1;
+            }
+            if (UI.blurDisplay) {
+                UI.blurDisplay.textContent = 1;
+            }
+        }
+    },
+
+    // Selection Tools State
+    selection: {
+        active: false,
+        startX: 0,
+        startY: 0,
+        endX: 0,
+        endY: 0,
+        type: null, // 'rect' or 'circle'
+        pixels: null
+    },
+
+    /**
+     * Start selection operation
+     */
+    startSelection(x, y, type) {
+        this.selection.active = true;
+        this.selection.startX = x;
+        this.selection.startY = y;
+        this.selection.endX = x;
+        this.selection.endY = y;
+        this.selection.type = type;
+        this.selection.pixels = null;
+    },
+
+    /**
+     * Update selection during drag
+     */
+    updateSelection(x, y) {
+        if (!this.selection.active) return;
+
+        this.selection.endX = x;
+        this.selection.endY = y;
+
+        // Clear previous preview
+        pCtx.clearRect(0, 0, State.width, State.height);
+
+        // Draw selection preview in blue-grey (50% black with blue tint)
+        pCtx.strokeStyle = 'rgba(100, 100, 200, 0.7)';
+        pCtx.lineWidth = 1;
+        pCtx.setLineDash([5, 3]);
+
+        if (this.selection.type === 'rect') {
+            this.drawSelectionRect();
+        } else if (this.selection.type === 'circle') {
+            this.drawSelectionCircle();
+        }
+    },
+
+    /**
+     * Draw rectangular selection preview
+     */
+    drawSelectionRect() {
+        const x0 = Math.min(this.selection.startX, this.selection.endX);
+        const y0 = Math.min(this.selection.startY, this.selection.endY);
+        const x1 = Math.max(this.selection.startX, this.selection.endX);
+        const y1 = Math.max(this.selection.startY, this.selection.endY);
+
+        pCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    },
+
+    /**
+     * Draw circular selection preview
+     */
+    drawSelectionCircle() {
+        const x0 = this.selection.startX;
+        const y0 = this.selection.startY;
+        const x1 = this.selection.endX;
+        const y1 = this.selection.endY;
+
+        const r = Math.floor(Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)));
+        pCtx.beginPath();
+        pCtx.arc(x0, y0, r, 0, 2 * Math.PI);
+        pCtx.stroke();
+    },
+
+    /**
+     * End selection and capture pixels
+     */
+    endSelection() {
+        if (!this.selection.active) return;
+
+        this.selection.active = false;
+
+        // Clear preview
+        pCtx.clearRect(0, 0, State.width, State.height);
+        pCtx.setLineDash([]);
+
+        // Capture the selected pixels
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const layer = currentFrame.layers[State.activeLayerIndex];
+
+        if (this.selection.type === 'rect') {
+            this.captureRectSelection(layer.data);
+        } else if (this.selection.type === 'circle') {
+            this.captureCircleSelection(layer.data);
+        }
+    },
+
+    /**
+     * Capture rectangular selection pixels
+     */
+    captureRectSelection(imageData) {
+        const x0 = Math.min(this.selection.startX, this.selection.endX);
+        const y0 = Math.min(this.selection.startY, this.selection.endY);
+        const x1 = Math.max(this.selection.startX, this.selection.endX);
+        const y1 = Math.max(this.selection.startY, this.selection.endY);
+
+        const width = x1 - x0;
+        const height = y1 - y0;
+
+        // Create a new ImageData for the selection
+        const selectionData = new ImageData(width, height);
+        const srcData = imageData.data;
+        const destData = selectionData.data;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const srcIdx = ((y0 + y) * State.width + (x0 + x)) * 4;
+                const destIdx = (y * width + x) * 4;
+
+                // Copy pixel data
+                destData[destIdx] = srcData[srcIdx];
+                destData[destIdx + 1] = srcData[srcIdx + 1];
+                destData[destIdx + 2] = srcData[srcIdx + 2];
+                destData[destIdx + 3] = srcData[srcIdx + 3];
+            }
+        }
+
+        this.selection.pixels = selectionData;
+        InputHandler.showNotification(`Rectangular selection captured (${width}x${height} pixels)`, 'success');
+    },
+
+    /**
+     * Capture circular selection pixels
+     */
+    captureCircleSelection(imageData) {
+        const x0 = this.selection.startX;
+        const y0 = this.selection.startY;
+        const x1 = this.selection.endX;
+        const y1 = this.selection.endY;
+
+        const r = Math.floor(Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)));
+        const diameter = r * 2;
+
+        // Create a square ImageData that can contain the circle
+        const selectionData = new ImageData(diameter, diameter);
+        const srcData = imageData.data;
+        const destData = selectionData.data;
+
+        // Clear the selection data (transparent background)
+        for (let i = 0; i < destData.length; i += 4) {
+            destData[i] = 0;
+            destData[i + 1] = 0;
+            destData[i + 2] = 0;
+            destData[i + 3] = 0;
+        }
+
+        // Copy pixels that are inside the circle
+        for (let y = 0; y < diameter; y++) {
+            for (let x = 0; x < diameter; x++) {
+                // Check if pixel is inside the circle
+                const dx = x - r;
+                const dy = y - r;
+                if (dx * dx + dy * dy <= r * r) {
+                    const srcX = x0 - r + x;
+                    const srcY = y0 - r + y;
+
+                    // Check bounds
+                    if (srcX >= 0 && srcX < State.width && srcY >= 0 && srcY < State.height) {
+                        const srcIdx = (srcY * State.width + srcX) * 4;
+                        const destIdx = (y * diameter + x) * 4;
+
+                        // Copy pixel data
+                        destData[destIdx] = srcData[srcIdx];
+                        destData[destIdx + 1] = srcData[srcIdx + 1];
+                        destData[destIdx + 2] = srcData[srcIdx + 2];
+                        destData[destIdx + 3] = srcData[srcIdx + 3];
+                    }
+                }
+            }
+        }
+
+        this.selection.pixels = selectionData;
+        InputHandler.showNotification(`Circular selection captured (radius: ${r} pixels)`, 'success');
+    },
+
+    /**
+     * Copy selected pixels to clipboard (simulated)
+     */
+    copySelection() {
+        if (!this.selection.pixels) {
+            InputHandler.showNotification('No active selection to copy', 'error');
+            return;
+        }
+
+        // Store selection in state for paste operation
+        State.copiedSelection = this.selection.pixels;
+        InputHandler.showNotification('Selection copied to clipboard', 'success');
+    },
+
+    /**
+     * Paste copied pixels to a new layer
+     */
+    pasteSelection() {
+        if (!State.copiedSelection) {
+            InputHandler.showNotification('No copied selection to paste', 'error');
+            return;
+        }
+
+        // Create a new layer for the pasted content
+        const currentFrame = State.frames[State.currentFrameIndex];
+        const newLayer = this.createLayer('Pasted Selection');
+
+        // Position the paste at the center or at a reasonable position
+        const pasteX = Math.max(0, Math.min(State.width - State.copiedSelection.width, State.width / 2 - State.copiedSelection.width / 2));
+        const pasteY = Math.max(0, Math.min(State.height - State.copiedSelection.height, State.height / 2 - State.copiedSelection.height / 2));
+
+        // Create a temporary canvas to position the pasted content
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = State.width;
+        tempCanvas.height = State.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Fill with transparent background
+        tempCtx.clearRect(0, 0, State.width, State.height);
+
+        // Draw the copied selection at the paste position
+        tempCtx.putImageData(State.copiedSelection, pasteX, pasteY);
+
+        // Get the result and store in the new layer
+        newLayer.data = tempCtx.getImageData(0, 0, State.width, State.height);
+
+        // Add the new layer to the frame
+        currentFrame.layers.push(newLayer);
+        State.activeLayerIndex = currentFrame.layers.length - 1;
+
+        // Update UI
+        CanvasManager.render();
+        LayerManager.renderList();
+
+        InputHandler.showNotification('Selection pasted to new layer', 'success');
     }
 };

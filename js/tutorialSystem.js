@@ -59,96 +59,105 @@ class TutorialSystem {
     }
 
     addTutorialSetting() {
-        // Add tutorial toggle to settings panel
-        const settingsPanel = document.getElementById('panel-settings');
-        if (settingsPanel) {
-            const tutorialSettingHTML = `
-                <div class="control-section">
-                    <div class="section-title" style="margin-bottom: 12px;">
-                        <span>Tutorial Settings</span>
-                    </div>
+        // Check if tutorial settings already exist in the modal (new structure)
+        const existingTutorialCheckbox = document.getElementById('settings-enable-tutorials');
+        const existingStartBtn = document.getElementById('startTutorialBtn');
 
-                    <div class="setting-item" style="margin-bottom: 12px;">
-                        <label class="setting-label">
-                            <input type="checkbox" id="enableTutorialsSettings" checked>
-                            <span class="checkmark"></span> Enable Tutorials
-                        </label>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
-                            Show interactive tutorials on startup
+        // If settings don't exist, try to add them to the old panel-settings structure
+        if (!existingTutorialCheckbox && !existingStartBtn) {
+            const settingsPanel = document.getElementById('panel-settings');
+            if (settingsPanel) {
+                const tutorialSettingHTML = `
+                    <div class="control-section">
+                        <div class="section-title" style="margin-bottom: 12px;">
+                            <span>Tutorial Settings</span>
+                        </div>
+
+                        <div class="setting-item" style="margin-bottom: 12px;">
+                            <label class="setting-label">
+                                <input type="checkbox" id="enableTutorialsSettings" checked>
+                                <span class="checkmark"></span> Enable Tutorials
+                            </label>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
+                                Show interactive tutorials on startup
+                            </div>
+                        </div>
+
+                        <div class="setting-item" style="margin-bottom: 16px;">
+                            <label class="setting-label">
+                                <input type="checkbox" id="showTutorialHints" checked>
+                                <span class="checkmark"></span> Show Tutorial Hints
+                            </label>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
+                                Display helpful hints and tooltips
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                            <button id="startTutorialBtn" class="full-btn" style="margin-bottom: 8px;">
+                                <i class="fas fa-graduation-cap"></i> Start Tutorial
+                            </button>
+                            <button id="resetTutorialBtn" class="full-btn secondary">
+                                <i class="fas fa-redo"></i> Reset Tutorial Progress
+                            </button>
                         </div>
                     </div>
+                `;
 
-                    <div class="setting-item" style="margin-bottom: 16px;">
-                        <label class="setting-label">
-                            <input type="checkbox" id="showTutorialHints" checked>
-                            <span class="checkmark"></span> Show Tutorial Hints
-                        </label>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
-                            Display helpful hints and tooltips
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
-                        <button id="startTutorialBtn" class="full-btn" style="margin-bottom: 8px;">
-                            <i class="fas fa-graduation-cap"></i> Start Tutorial
-                        </button>
-                        <button id="resetTutorialBtn" class="full-btn secondary">
-                            <i class="fas fa-redo"></i> Reset Tutorial Progress
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            // Insert before storage section
-            const storageSection = settingsPanel.querySelector('.control-section:last-child');
-            if (storageSection) {
-                storageSection.insertAdjacentHTML('beforebegin', tutorialSettingHTML);
-            } else {
-                settingsPanel.insertAdjacentHTML('beforeend', tutorialSettingHTML);
+                // Insert before storage section
+                const storageSection = settingsPanel.querySelector('.control-section:last-child');
+                if (storageSection) {
+                    storageSection.insertAdjacentHTML('beforebegin', tutorialSettingHTML);
+                } else {
+                    settingsPanel.insertAdjacentHTML('beforeend', tutorialSettingHTML);
+                }
             }
+        }
 
-            // Add event listeners for tutorial settings
-            const enableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
-            const showTutorialHintsCheckbox = document.getElementById('showTutorialHints');
-            const startTutorialBtn = document.getElementById('startTutorialBtn');
-            const resetTutorialBtn = document.getElementById('resetTutorialBtn');
+        // Use the settings from the modal if they exist, otherwise use the old ones
+        const enableTutorialsCheckbox = document.getElementById('settings-enable-tutorials') ||
+                                        document.getElementById('enableTutorialsSettings');
+        const showTutorialHintsCheckbox = document.getElementById('settings-show-hints') ||
+                                        document.getElementById('showTutorialHints');
+        const startTutorialBtn = document.getElementById('startTutorialBtn');
+        const resetTutorialBtn = document.getElementById('resetTutorialBtn');
 
-            if (enableTutorialsCheckbox) {
-                // Set default to enabled (checked)
-                enableTutorialsCheckbox.checked = true;
-                this.app.tutorialConfig.tutorials.main.enabled = true;
+        if (enableTutorialsCheckbox) {
+            // Set default to enabled (checked) but respect SettingsManager if available
+            const tutorialsEnabled = typeof SettingsManager !== 'undefined' ? SettingsManager.settings.enableTutorials : true;
+            enableTutorialsCheckbox.checked = tutorialsEnabled;
+            this.app.tutorialConfig.tutorials.main.enabled = tutorialsEnabled;
 
-                enableTutorialsCheckbox.addEventListener('change', (e) => {
-                    this.app.tutorialConfig.tutorials.main.enabled = e.target.checked;
-                    if (!e.target.checked && this.config.isTutorialActive()) {
-                        this.hideTutorial();
-                    }
-                });
-            }
+            enableTutorialsCheckbox.addEventListener('change', (e) => {
+                this.app.tutorialConfig.tutorials.main.enabled = e.target.checked;
+                if (!e.target.checked && this.config.isTutorialActive()) {
+                    this.hideTutorial();
+                }
+            });
+        }
 
-            if (showTutorialHintsCheckbox) {
-                showTutorialHintsCheckbox.checked = true;
-                showTutorialHintsCheckbox.addEventListener('change', (e) => {
-                    // Store hint preference
-                    this.app.tutorialConfig.showHints = e.target.checked;
-                });
-            }
+        if (showTutorialHintsCheckbox) {
+            showTutorialHintsCheckbox.checked = true;
+            showTutorialHintsCheckbox.addEventListener('change', (e) => {
+                // Store hint preference
+                this.app.tutorialConfig.showHints = e.target.checked;
+            });
+        }
 
-            if (startTutorialBtn) {
-                startTutorialBtn.addEventListener('click', () => {
-                    this.startTutorial('main');
-                });
-            }
+        if (startTutorialBtn) {
+            startTutorialBtn.addEventListener('click', () => {
+                this.startTutorial('main');
+            });
+        }
 
-            if (resetTutorialBtn) {
-                resetTutorialBtn.addEventListener('click', () => {
-                    this.config.resetTutorial();
-                    if (typeof Notifications !== 'undefined') {
-                        const notifications = new Notifications();
-                        notifications.info('Tutorial progress has been reset. You can start over anytime.');
-                    }
-                });
-            }
+        if (resetTutorialBtn) {
+            resetTutorialBtn.addEventListener('click', () => {
+                this.config.resetTutorial();
+                if (typeof Notifications !== 'undefined') {
+                    const notifications = new Notifications();
+                    notifications.info('Tutorial progress has been reset. You can start over anytime.');
+                }
+            });
         }
 
         // Auto-start tutorial if enabled in settings
@@ -159,9 +168,21 @@ class TutorialSystem {
      * Check if tutorials are enabled and auto-start if needed
      */
     autoStartTutorialIfEnabled() {
-        // Check if tutorials are enabled in settings
-        const enableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
-        if (enableTutorialsCheckbox && enableTutorialsCheckbox.checked) {
+        // Check if tutorials are enabled - prioritize SettingsManager if available
+        let tutorialsEnabled = false;
+
+        if (typeof SettingsManager !== 'undefined') {
+            // Use SettingsManager settings if available
+            tutorialsEnabled = SettingsManager.settings.enableTutorials;
+        } else {
+            // Fallback to DOM checkbox state if SettingsManager not available
+            const oldEnableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
+            const newEnableTutorialsCheckbox = document.getElementById('settings-enable-tutorials');
+            tutorialsEnabled = (oldEnableTutorialsCheckbox && oldEnableTutorialsCheckbox.checked) ||
+                             (newEnableTutorialsCheckbox && newEnableTutorialsCheckbox.checked);
+        }
+
+        if (tutorialsEnabled) {
             // Small delay to ensure DOM is fully ready
             setTimeout(() => {
                 this.startTutorial('main', true);
@@ -201,9 +222,21 @@ class TutorialSystem {
     }
 
     startTutorial(tutorialId, isAutoStart = false) {
-        // Check if tutorials are enabled
-        const enableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
-        if (enableTutorialsCheckbox && !enableTutorialsCheckbox.checked) {
+        // Check if tutorials are enabled - prioritize SettingsManager if available
+        let tutorialsEnabled = false;
+
+        if (typeof SettingsManager !== 'undefined') {
+            // Use SettingsManager settings if available
+            tutorialsEnabled = SettingsManager.settings.enableTutorials;
+        } else {
+            // Fallback to DOM checkbox state if SettingsManager not available
+            const oldEnableTutorialsCheckbox = document.getElementById('enableTutorialsSettings');
+            const newEnableTutorialsCheckbox = document.getElementById('settings-enable-tutorials');
+            tutorialsEnabled = (oldEnableTutorialsCheckbox && oldEnableTutorialsCheckbox.checked) ||
+                             (newEnableTutorialsCheckbox && newEnableTutorialsCheckbox.checked);
+        }
+
+        if (!tutorialsEnabled) {
             console.log('Tutorials are disabled in settings');
             return;
         }

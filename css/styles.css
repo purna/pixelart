@@ -1,25 +1,36 @@
-/* ************************ PIXEL ART STUDIO PRO ************************ */
+/* ======================================================================================== */
+/* PIXEL ART STUDIO PRO - STYLESHEET */
+/* Comprehensive styling with dark theme and neon accents */
+/* ======================================================================================== */
+
+/* ============================================= */
+/* 1. CSS VARIABLES */
+/* ============================================= */
 
 :root {
+    /* Color Palette */
     --bg-darkest: #0f0f1b;
     --bg-dark: #1a1a2e;
     --bg-medium: #16213e;
     --bg-light: #1e293b;
     --accent-primary: #00ff41;
-    /* Terminal Green */
     --accent-secondary: #ff006e;
-    /* Neon Pink */
     --accent-tertiary: #00d9ff;
-    /* Cyan */
     --text-primary: #e0e7ff;
     --text-secondary: #94a3b8;
     --border-color: #2d3748;
     --border-glow: rgba(0, 255, 65, 0.3);
 
+    /* Layout Dimensions */
     --header-height: 50px;
     --tools-width: 60px;
     --right-panel-width: 280px;
+    --tab-height: 50px;
 }
+
+/* ============================================= */
+/* 2. BASE RESET AND GLOBAL STYLES */
+/* ============================================= */
 
 * {
     margin: 0;
@@ -29,7 +40,8 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: var(--bg-darkest);
+    background: linear-gradient(135deg, var(--bg-darkest) 0%, var(--bg-dark) 50%, var(--bg-medium) 100%);
+    background-attachment: fixed;
     color: var(--text-primary);
     height: 100vh;
     display: flex;
@@ -38,37 +50,55 @@ body {
     user-select: none;
 }
 
-/* CRT SCANLINE OVERLAY */
+/* Scanline effect overlay */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    background-size: 100% 2px, 3px 100%;
+    background: 
+        linear-gradient(rgba(0, 255, 65, 0.01) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 217, 255, 0.01) 1px, transparent 1px);
+    background-size: 2px 2px;
     pointer-events: none;
     z-index: 9999;
+    opacity: 0.3;
 }
 
-/* --- HEADER --- */
+/* ============================================= */
+/* 3. HEADER */
+/* ============================================= */
+
 header {
     height: var(--header-height);
-    background: var(--bg-dark);
+    background: linear-gradient(135deg, var(--bg-dark), var(--bg-medium));
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
     z-index: 20;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+.logo-area {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
 }
 
 .logo-area h1 {
-    font-family: 'Press Start 2P', cursive;
-    font-size: 14px;
-    color: var(--accent-primary);
-    text-shadow: 0 0 10px var(--border-glow);
-    display: inline-block;
-    margin-right: 10px;
+    font-family: 'Press Start 2P', 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: normal;
+    color: transparent;
+    background-image: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary), var(--accent-primary));
+    background-size: 200%;
+    background-position: 0% 50%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: animate-background 2s infinite alternate linear;
 }
 
 .badge {
@@ -87,7 +117,6 @@ header {
     align-items: center;
 }
 
-/* Zoom display */
 .zoom-controls-header {
     display: flex;
     align-items: center;
@@ -95,7 +124,7 @@ header {
 }
 
 .zoom-display {
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     min-width: 30px;
     text-align: center;
@@ -103,7 +132,10 @@ header {
     text-shadow: 0 0 5px rgba(0, 217, 255, 0.5);
 }
 
-/* BUTTONS */
+/* ============================================= */
+/* 4. BUTTONS */
+/* ============================================= */
+
 button {
     cursor: pointer;
     font-family: inherit;
@@ -122,11 +154,20 @@ button {
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn:hover {
     background: var(--bg-medium);
     border-color: var(--text-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn.primary {
@@ -134,10 +175,13 @@ button {
     color: #000;
     font-weight: bold;
     border: none;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    animation: subtlePulse 2s ease infinite;
 }
 
 .btn.primary:hover {
-    box-shadow: 0 0 15px var(--border-glow);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    transform: translateY(-1px) scale(1.02);
 }
 
 .btn.icon-only {
@@ -183,69 +227,70 @@ button {
     color: var(--text-primary);
 }
 
-/* --- MAIN LAYOUT --- */
+/* Close and slide-out buttons for panels */
+.close-panel-btn,
+.slide-out-btn {
+    background: var(--accent-secondary);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: all 0.2s;
+}
+
+.close-panel-btn:hover,
+.slide-out-btn:hover {
+    background: var(--accent-primary);
+    transform: scale(1.1);
+}
+
+/* ============================================= */
+/* 5. MAIN LAYOUT */
+/* ============================================= */
+
 .main-container {
     display: flex;
     flex: 1;
     overflow: hidden;
     position: relative;
-}
-
-/* LEFT TOOLBAR */
-.toolbar {
-    width: var(--tools-width);
-    background: var(--bg-dark);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
-    gap: 8px;
-    z-index: 10;
-    position: relative;
-}
-
-.tool-btn {
-    width: 40px;
-    height: 40px;
-    background: transparent;
-    color: var(--text-secondary);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    border: 1px solid transparent;
-}
-
-.tool-btn:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.tool-btn.active {
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
-    background: rgba(0, 255, 65, 0.1);
-    box-shadow: 0 0 10px var(--border-glow);
+    z-index: 1;
 }
 
 .separator {
-    width: 60%;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
     height: 1px;
-    background: var(--border-color);
+    width: 80%;
     margin: 5px 0;
 }
 
-/* CENTER WORKSPACE */
+/* ============================================= */
+/* 6. WORKSPACE & CANVAS */
+/* ============================================= */
+
 .workspace {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #000;
-    /* Canvas BG */
+    background: linear-gradient(to bottom right, rgba(0, 217, 255, 0.01), rgba(255, 0, 110, 0.01), rgba(0, 255, 65, 0.01));
     position: relative;
     overflow: hidden;
+    z-index: 1;
+}
+
+canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: auto;
 }
 
 #canvas-wrapper {
@@ -255,12 +300,14 @@ button {
     justify-content: center;
     overflow: hidden;
     background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
         linear-gradient(45deg, #111 25%, transparent 25%),
         linear-gradient(-45deg, #111 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, #111 75%),
         linear-gradient(-45deg, transparent 75%, #111 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
+    background-position: 0 0, 0 0, 0 0, 0 10px, 10px -10px, -10px 0px;
     position: relative;
 }
 
@@ -278,20 +325,26 @@ button {
     transform-origin: top left;
 }
 
-canvas {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    position: absolute;
-    top: 0;
-    left: 0;
+#canvas-wrapper,
+#drawing-area,
+canvas,
+#grid-overlay,
+#previewLayer,
+#tilemap-overlay {
+    z-index: 1;
+    pointer-events: none;
 }
 
 #layer-composition {
-    z-index: 10;
+    z-index: 5;
+    pointer-events: auto;
 }
 
 #previewLayer {
     z-index: 20;
+    cursor: crosshair;
+    mix-blend-mode: normal;
+    pointer-events: auto;
 }
 
 #grid-overlay {
@@ -307,8 +360,233 @@ canvas {
     display: none;
 }
 
+/* ============================================= */
+/* 7. TOOLBAR */
+/* ============================================= */
 
-/* TIMELINE (BOTTOM) */
+.toolbar {
+    width: var(--tools-width);
+    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+    border-right: 1px solid rgba(45, 55, 72, 0.3);
+    box-shadow: 1px 0 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 8px;
+    z-index: 10000;
+    position: relative;
+    pointer-events: none;
+}
+
+.tool-btn,
+.tool-btn.menu-parent {
+    pointer-events: auto;
+}
+
+.tool-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tool-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tool-btn.active {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+    transform: translateY(-1px);
+    animation: toolPulse 0.3s ease, subtlePulse 2s ease infinite;
+}
+
+.tool-btn.active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    opacity: 0.8;
+}
+
+.tool-btn.active-tab {
+    background-color: var(--bg-light);
+    border-left: 2px solid var(--accent-tertiary);
+}
+
+/* Menu parent buttons */
+.tool-btn.menu-parent {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.tool-btn.menu-parent::after {
+    content: '▶';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.tool-btn.menu-parent.active::after {
+    content: '▼';
+    color: var(--accent-tertiary);
+    opacity: 1;
+}
+
+
+.tool-btn.menu-parent.persistent-menu-active {
+    background-color: rgba(0, 255, 65, 0.2);
+    border: 1px solid var(--accent-primary);
+    box-shadow: 0 0 12px var(--border-glow);
+}
+
+/* Special tool styling */
+.tool-btn[data-tool="select-rect"]::after,
+.tool-btn[data-tool="select-circle"]::after,
+.tool-btn[data-tool="select-lasso"]::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.tool-btn[data-tool="lighten-darken"] {
+    background: linear-gradient(45deg, #ffffff 50%, #000000 50%);
+    background-size: 200% 200%;
+    transition: background-position 0.3s ease;
+}
+
+.tool-btn[data-tool="lighten-darken"]:hover {
+    background-position: 100% 100%;
+}
+
+.tool-btn[data-tool="lighten-darken"] .fas {
+    color: var(--bg-dark);
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.tool-btn.menu-parent[data-tooltip*="Drawing Tools"]::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+/* Active menu indicator - green dot for last clicked menu */
+.tool-btn.menu-parent.active-menu::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+/* ============================================= */
+/* 8. TOOL SUBMENUS */
+/* ============================================= */
+
+.tool-submenu {
+    display: none;
+    position: fixed;
+    left: 60px;
+    margin-left: 0;
+    top: var(--submenu-top, 100px);
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    min-width: 48px;
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    transition: opacity 0.15s ease 0.1s, transform 0.15s ease; /* Add delay */
+}
+
+.tool-submenu.visible {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    animation: fadeIn 0.15s ease forwards;
+}
+
+.tool-submenu::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 16px;
+    width: 8px;
+    background: transparent;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid var(--border-color);
+}
+
+.tool-submenu .tool-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    background: transparent;
+    border: 1px solid transparent;
+    z-index: 100;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+
+.persistent-submenu {
+    display: flex;
+    /*opacity: 1;*/
+    /*transform: translateY(0);*/
+    /*pointer-events: auto;*/
+}
+
+/* ============================================= */
+/* 9. TIMELINE PANEL */
+/* ============================================= */
+
 .timeline-panel {
     height: 160px;
     background: var(--bg-dark);
@@ -366,42 +644,10 @@ canvas {
     border-radius: 2px;
 }
 
-/* RIGHT PANEL (SLIDE OUT) */
-.right-panel {
-    width: var(--right-panel-width);
-    background: var(--bg-dark);
-    border-left: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    z-index: 15;
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    transform: translateX(0);
-    /* Default open */
-}
+/* ============================================= */
+/* 10. LAYERS */
+/* ============================================= */
 
-.right-panel.closed {
-    transform: translateX(100%);
-    width: 0;
-    /* Collapse width nicely */
-    border-left: none;
-}
-
-.panel-section {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.section-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: var(--accent-tertiary);
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-    display: flex;
-    justify-content: space-between;
-}
-
-/* LAYERS LIST */
 .layers-list {
     max-height: 200px;
     overflow-y: auto;
@@ -445,10 +691,8 @@ canvas {
 
 .layer-vis-btn.hidden-layer::before {
     content: "\f070";
-    /* Eye with slash icon */
 }
 
-/* Hover effects for layer icons */
 .drag-handle {
     cursor: move;
     color: var(--text-secondary);
@@ -469,216 +713,133 @@ canvas {
     color: var(--accent-primary);
 }
 
-/* Preset brush size buttons */
-.preset-brush-size {
-    transition: all 0.2s ease;
-    font-family: inherit;
-}
+/* ============================================= */
+/* 11. FORM CONTROLS */
+/* ============================================= */
 
-.preset-brush-size:hover {
-    background: var(--bg-medium) !important;
-    border-color: var(--accent-primary) !important;
-    color: var(--accent-primary) !important;
-    box-shadow: 0 0 8px var(--border-glow);
-}
-
-.preset-brush-size.active {
-    background: var(--accent-primary) !important;
-    color: #000 !important;
-    border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 8px var(--border-glow);
-}
-
-/* SETTINGS PANEL CONTAINER */
-.settings-panel-container {
-    position: fixed;
-    right: -280px;
-    top: var(--header-height);
-    bottom: 0;
-    width: 280px;
-    background: var(--bg-dark);
-    border-left: 1px solid var(--border-color);
-    z-index: 25;
-    transition: right 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-}
-
-.settings-panel-container.open {
-    right: 0;
-}
-
-.settings-panel-header {
-    height: 50px;
-    background: var(--bg-medium);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 15px;
-    color: var(--accent-tertiary);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: bold;
-}
-
-#settings-toggle {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 5px;
+/* Range Sliders */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
     border-radius: 3px;
-    transition: all 0.2s;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity 0.2s;
 }
 
-#settings-toggle:hover {
-    background: var(--bg-light);
-    color: var(--text-primary);
-}
-
-.settings-panel-content {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-}
-
-/* OLD SETTINGS PANEL (DEPRECATED - NOW USING NEW SLIDING PANEL) */
-.settings-panel {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.settings-panel.hidden {
-    display: none;
-}
-
-.settings-content {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.setting-item {
-    margin-bottom: 12px;
-}
-
-.setting-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-primary);
-    position: relative;
-    padding-left: 30px;
-    transition: color 0.2s;
-}
-
-.setting-label:hover {
-    color: var(--accent-primary);
-}
-
-/* Tutorial Settings Section */
-.control-section {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: var(--accent-tertiary);
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.control-group {
-    margin-bottom: 12px;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.checkbox-group input[type="checkbox"] {
-    position: relative;
+input[type="range"]:hover {
     opacity: 1;
-    cursor: pointer;
-    height: 18px;
-    width: 18px;
-    accent-color: var(--accent-primary);
 }
 
-.checkbox-group label {
-    font-size: 13px;
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-/* CUSTOM CHECKBOX STYLING */
-.setting-label input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.checkmark {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 18px;
-    width: 18px;
-    background: var(--bg-medium);
-    border: 2px solid var(--border-color);
-    border-radius: 3px;
-    transition: all 0.2s ease;
-}
-
-.setting-label:hover input~.checkmark {
-    border-color: var(--accent-primary);
-}
-
-.setting-label input:checked~.checkmark {
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
     background: var(--accent-primary);
-    border-color: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-dark);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
 
-.checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-    left: 5px;
-    top: 2px;
-    width: 4px;
-    height: 8px;
-    border: solid #000;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-dark);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
 
-.setting-label input:checked~.checkmark:after {
+input[type="range"]::-webkit-slider-track {
+    height: 6px;
+    background: linear-gradient(to right, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: linear-gradient(to right, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    border-radius: 3px;
+    border: none;
+}
+
+/* Number, Text, and Color Inputs */
+#widthInput,
+#heightInput,
+input[type="number"],
+input[type="text"],
+input[type="color"] {
+    background: #6b7280;
+    border: 1px solid #9ca3af;
+    color: #f3f4f6;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="color"]:focus {
+    background: #9ca3af;
+    border-color: #d1d5db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.3);
+}
+
+/* Slider with value layout */
+.slider-value-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.slider-container {
+    flex: 0 0 80%;
+    max-width: 80%;
+}
+
+.slider-container input[type="range"] {
+    width: 100%;
+}
+
+.value-container {
+    flex: 0 0 20%;
+    max-width: 20%;
+    padding-left: 8px;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+}
+
+/* Tool options controls */
+.tool-options-control {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tool-options-control:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.tool-option-label {
     display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
-.setting-separator {
-    height: 1px;
-    background: var(--border-color);
-    margin: 20px 0 15px 0;
-}
+/* ============================================= */
+/* 12. PALETTE */
+/* ============================================= */
 
-.setting-actions {
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* PALETTE */
 .palette-grid {
     display: flex;
     flex-wrap: wrap;
@@ -710,165 +871,30 @@ canvas {
     box-shadow: 0 0 8px var(--border-glow);
 }
 
-/* FLOATING TOGGLE BUTTON FOR PANEL */
-#panel-toggle {
-    position: absolute;
-    right: 280px;
-    /* Aligned with open panel */
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    border-right: none;
-    padding: 10px 4px;
-    border-radius: 8px 0 0 8px;
-    cursor: pointer;
-    z-index: 100;
-    color: var(--accent-tertiary);
-    transition: right 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+/* Preset brush sizes */
+.preset-brush-size {
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
-#panel-toggle:hover {
+.preset-brush-size:hover {
     background: var(--bg-medium);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
 }
 
-/* NOTIFICATIONS */
-.notification-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
+.preset-brush-size.active {
+    background: var(--accent-primary);
+    color: #000;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
 }
 
-/* SLIDERS AND INPUTS - GREY STYLING */
-input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 6px;
-    background: #6b7280;
-    border-radius: 3px;
-    outline: none;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
+/* ============================================= */
+/* 13. MIRROR OPTIONS */
+/* ============================================= */
 
-input[type="range"]:hover {
-    opacity: 1;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #9ca3af;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #e5e7eb;
-}
-
-input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #9ca3af;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #e5e7eb;
-}
-
-input[type="range"]::-webkit-slider-track {
-    height: 6px;
-    background: #6b7280;
-    border-radius: 3px;
-}
-
-input[type="range"]::-moz-range-track {
-    height: 6px;
-    background: #6b7280;
-    border-radius: 3px;
-    border: none;
-}
-
-/* NUMBER INPUTS FOR LAYERS AND CANVAS SETTINGS */
-#widthInput,
-#heightInput,
-input[type="number"],
-input[type="text"],
-input[type="color"] {
-    background: #6b7280 !important;
-    border: 1px solid #9ca3af !important;
-    color: #f3f4f6 !important;
-    border-radius: 4px;
-    padding: 4px 8px;
-}
-
-input[type="number"]:focus,
-input[type="text"]:focus,
-input[type="color"]:focus {
-    background: #9ca3af !important;
-    border-color: #d1d5db !important;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.3);
-}
-
-/* RIGHT PANEL SCROLL FUNCTIONALITY */
-
-/* TOOLBAR SPACER */
-.toolbar-spacer {
-    flex: 1;
-    width: 100%;
-    min-height: 20px;
-}
-
-.right-panel {
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) var(--bg-dark);
-}
-
-.right-panel::-webkit-scrollbar {
-    width: 6px;
-}
-
-.right-panel::-webkit-scrollbar-track {
-    background: var(--bg-dark);
-}
-
-.right-panel::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-}
-
-.right-panel::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
-}
-
-/* ZOOM OVERLAY */
-.zoom-overlay {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    color: var(--text-secondary);
-    pointer-events: none;
-    border: 1px solid var(--border-color);
-}
-
-/* Add this to your styles.css */
-.hidden {
-    display: none !important;
-}
-
-/* Optional: Visual feedback for the active "Tab" in the toolbar */
-.tool-btn.active-tab {
-    background-color: var(--bg-light);
-    border-left: 2px solid var(--accent-tertiary);
-}
-
-/* PROFESSIONAL MIRROR OPTIONS STYLING */
 .mirror-axis-container {
     display: flex;
     flex-direction: column;
@@ -905,11 +931,7 @@ input[type="color"]:focus {
     width: 0;
 }
 
-/* Checked state using sibling selector */
-.mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-title {
-    color: var(--accent-primary);
-}
-
+.mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-title,
 .mirror-axis-option input[type="radio"]:checked ~ .mirror-info .mirror-subtitle {
     color: var(--accent-primary);
 }
@@ -932,41 +954,24 @@ input[type="color"]:focus {
     box-shadow: 0 0 12px var(--border-glow);
 }
 
-.mirror-axis-option input[type="radio"]:checked ~ .mirror-info::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary));
-    border-radius: 8px 8px 0 0;
-    z-index: 1;
-}
-
-/* Fallback for browsers without :has() support using JavaScript */
 .mirror-axis-option.checked {
-    border-color: var(--accent-primary) !important;
-    background: rgba(0, 255, 65, 0.08) !important;
-    box-shadow: 0 0 12px var(--border-glow) !important;
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 65, 0.08);
+    box-shadow: 0 0 12px var(--border-glow);
 }
 
-.mirror-axis-option.checked .mirror-title {
-    color: var(--accent-primary) !important;
-}
-
+.mirror-axis-option.checked .mirror-title,
 .mirror-axis-option.checked .mirror-subtitle {
-    color: var(--accent-primary) !important;
+    color: var(--accent-primary);
 }
 
 .mirror-axis-option.checked .mirror-icon {
-    background: var(--accent-primary) !important;
-    border-color: var(--accent-primary) !important;
-    color: #000 !important;
-    box-shadow: 0 0 8px var(--border-glow) !important;
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #000;
+    box-shadow: 0 0 8px var(--border-glow);
 }
 
-/* Mirror Preview Grid */
 .mirror-preview {
     display: flex;
     align-items: center;
@@ -998,12 +1003,6 @@ input[type="color"]:focus {
     box-shadow: 0 0 4px var(--border-glow);
 }
 
-.mirror-axis-option:has(input:checked) .mirror-cell.highlight {
-    background: #000;
-    box-shadow: inset 0 0 0 2px var(--accent-primary);
-}
-
-/* Mirror Info Section */
 .mirror-info {
     display: flex;
     align-items: center;
@@ -1031,13 +1030,6 @@ input[type="color"]:focus {
     box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
 }
 
-.mirror-axis-option:has(input:checked) .mirror-icon {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
-    color: #000;
-    box-shadow: 0 0 8px var(--border-glow);
-}
-
 .mirror-text {
     display: flex;
     flex-direction: column;
@@ -1062,15 +1054,6 @@ input[type="color"]:focus {
     color: var(--accent-tertiary);
 }
 
-.mirror-axis-option:has(input:checked) .mirror-title {
-    color: var(--accent-primary);
-}
-
-.mirror-axis-option:has(input:checked) .mirror-subtitle {
-    color: var(--accent-primary);
-}
-
-/* Mirror Note */
 .mirror-note {
     margin-top: 8px;
     padding: 8px 12px;
@@ -1084,25 +1067,10 @@ input[type="color"]:focus {
     border-color: rgba(0, 217, 255, 0.3);
 }
 
-/* Responsive adjustments for smaller panels */
-@media (max-width: 320px) {
-    .mirror-axis-option {
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
-    }
-    
-    .mirror-info {
-        justify-content: center;
-    }
-    
-    .mirror-grid {
-        width: 35px;
-        height: 35px;
-    }
-}
+/* ============================================= */
+/* 14. TILEMAP PANEL */
+/* ============================================= */
 
-/* TILEMAP PANEL STYLES */
 .tilemap-container {
     display: flex;
     flex-direction: column;
@@ -1115,79 +1083,10 @@ input[type="color"]:focus {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 2px;
-    width: 120px;
-    height: 120px;
     background: var(--bg-medium);
     padding: 4px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
-}
-
-.tilemap-square {
-    width: 32px;
-    height: 32px;
-    background: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.tilemap-square:hover {
-    border-color: var(--accent-tertiary);
-    box-shadow: 0 0 4px rgba(0, 217, 255, 0.3);
-}
-
-.tilemap-square.active {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 6px var(--border-glow);
-    background: var(--accent-primary);
-}
-
-.tilemap-square.center {
-    background: var(--bg-light);
-    cursor: default;
-    border-color: var(--accent-tertiary);
-}
-
-.tilemap-square.center:hover {
-    border-color: var(--accent-tertiary);
-    box-shadow: none;
-}
-
-.tilemap-square.center.active {
-    background: var(--accent-tertiary);
-    border-color: var(--accent-tertiary);
-}
-
-.tilemap-square canvas {
-    width: 100%;
-    height: 100%;
-    image-rendering: pixelated;
-    display: block;
-}
-
-.tilemap-controls {
-    width: 100%;
-}
-
-.tilemap-info {
-    text-align: center;
-}
-
-/* TILEMAP SQUARES (Original) */
-.tilemap-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 2px;
-    background: var(--bg-medium);
-    padding: 4px;
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
-    /* Let the grid size adjust based on canvas dimensions */
     width: fit-content;
     height: fit-content;
 }
@@ -1200,7 +1099,6 @@ input[type="color"]:focus {
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    /* Let the square size be determined by the canvas inside */
     width: fit-content;
     height: fit-content;
     min-width: 32px;
@@ -1235,8 +1133,6 @@ input[type="color"]:focus {
 }
 
 .tilemap-square canvas {
-    /* Canvas will be actual pixel dimensions (e.g., 32x32) */
-    /* Let CSS handle visual scaling */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -1244,17 +1140,23 @@ input[type="color"]:focus {
     display: block;
 }
 
-/* SEAMLESS GRID AROUND MAIN CANVAS - UPDATED */
+.tilemap-controls,
+.tilemap-info {
+    width: 100%;
+    text-align: center;
+}
+
+/* ============================================= */
+/* 15. SEAMLESS GRID OVERLAY */
+/* ============================================= */
+
 .seamless-grid-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 300%;
-    /* 3x the canvas width */
     height: 300%;
-    /* 3x the canvas height */
     transform: translate(-33.333%, -33.333%);
-    /* Center the grid so middle cell aligns with canvas */
     display: none;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -1298,7 +1200,6 @@ input[type="color"]:focus {
     display: none;
 }
 
-/* Make non-center cells interactive when in seamless mode */
 .seamless-grid-overlay.enabled .seamless-grid-cell:not(.center) {
     pointer-events: auto;
     cursor: crosshair;
@@ -1312,632 +1213,308 @@ input[type="color"]:focus {
     opacity: 0.7;
 }
 
-/* SETTINGS MODAL */
-.modal-overlay {
+/* ============================================= */
+/* 16. TOOLTIPS */
+/* ============================================= */
+
+.custom-tooltip {
+    position: absolute;
+    background: rgba(10, 10, 30, 0.96);
+    color: #e0e7ff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    transform: translateY(8px);
+    max-width: 320px;
+    box-shadow: 0 10px 40px rgba(0, 255, 65, 0.35);
+    border: 1px solid rgba(0, 255, 65, 0.5);
+    backdrop-filter: blur(12px);
+    white-space: pre-line;
+    word-wrap: break-word;
+}
+
+/* ============================================= */
+/* 17. NOTIFICATIONS */
+/* ============================================= */
+
+.notification-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: none; /* Hidden by default */
-    align-items: center;
-    justify-content: center;
+    top: 20px;
+    right: 20px;
     z-index: 10000;
-    backdrop-filter: blur(4px);
 }
 
-.modal-overlay.open {
-    display: flex;
-}
+/* ============================================= */
+/* 18. FLOATING PANEL TOGGLE */
+/* ============================================= */
 
-.modal {
-    background: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    width: 400px;
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    padding: 20px;
-    max-width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.modal-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--accent-primary);
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    border-top: 1px solid var(--border-color);
-    padding-top: 12px;
-    margin-top: 12px;
-}
-
-.modal-actions .btn {
-    min-width: 80px;
-}
-
-/* Settings Modal Scrollbar */
-.modal::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal::-webkit-scrollbar-track {
-    background: var(--bg-dark);
-    border-radius: 4px;
-}
-
-.modal::-webkit-scrollbar-thumb {
-    background: var(--accent-primary);
-    border-radius: 4px;
-}
-
-.modal::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-secondary);
-}
-
-/* Settings Modal Scrollbar for Firefox */
-.modal {
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-primary) var(--bg-dark);
-}
-
-/* Settings Tabs Container */
-.settings-tabs {
-    width: 100%;
-    display: flex;
-    gap: 8px;
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-}
-
-/* Tab System Styling */
-.settings-tab {
-    flex: 1;
-    padding: 8px 12px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border-bottom: 2px solid transparent;
-}
-
-.settings-tab:hover {
-    color: var(--text-primary);
-    background: var(--bg-light);
-}
-
-.settings-tab.active {
-    color: var(--accent-primary);
-    border-bottom-color: var(--accent-primary);
-    font-weight: 600;
-}
-
-.settings-tab-content {
-    display: none;
-    padding: 10px 0;
-}
-
-.settings-tab-content.active {
-    display: block;
-}
-
-/* Modal Content Wrapper - Proper layout for tabbed content */
-.modal-content-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding: 20px 20px 0;
-    box-sizing: border-box;
-}
-
-/* Settings Content Styling */
-.settings-content {
-    background: var(--bg-medium);
-    padding: 15px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-}
-
-.property-group {
-    background: var(--bg-light);
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-}
-
-.property-label {
-    font-size: 0.75rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-.settings-content input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--accent-primary);
-    cursor: pointer;
-}
-
-.settings-content input[type="range"] {
-    width: 100%;
-    cursor: pointer;
-}
-
-.settings-content input[type="color"] {
-    width: 60px;
-    height: 30px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.settings-content select {
-    background: var(--bg-light);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    width: 100%;
-    margin-top: 6px;
-}
-
-.settings-content input[type="number"] {
-    background: var(--bg-light);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    width: 100px;
-}
-
-/* Scene Settings Content */
-.scene-settings-content {
-    background: var(--bg-medium);
-    padding: 15px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-/* Export Settings Content */
-.export-settings-content {
-    background: var(--bg-medium);
-    padding: 15px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-}
-
-/* Modal Footer Styling */
-.modal footer {
-    flex-shrink: 0;
-    padding: 15px 20px 20px;
-    border-top: 1px solid var(--border-color);
-    margin-top: auto;
-    background: var(--bg-dark);
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
-/* Modal Header Styling */
-.modal header {
-    flex-shrink: 0;
-    padding: 20px 20px 40px 20px;
-    width: 100%;
-    display: block;
-    margin-bottom: 40px;
-}
-
-.modal header > div {
-    width: 100%;
-}
-
-/* Modal Scrollable Content */
-.modal-scrollable-content {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding: 0 20px;
-}
-
-/* Ensure property labels have consistent font size */
-.property-label {
-    font-size: 0.75rem !important;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-/* Tutorial tab specific styling */
-.settings-tab-content[data-tab-content="tutorial"] .property-label {
-    font-size: 0.75rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-/* Fix for settings modal width */
-.modal-content-wrapper {
-    min-width: 0;
-    width: 100%;
-}
-
-/* Ensure all tabs have consistent styling */
-.settings-tab-content {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Fix modal width to accommodate tabs */
-#unified-settings-modal .modal {
-    width: 500px;
-    max-width: 90%;
-}
-
-/* Settings Modal Scrollbar */
-#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar,
-#unified-settings-modal .modal .settings-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-track,
-#unified-settings-modal .modal .settings-content::-webkit-scrollbar-track {
-    background: var(--bg-dark);
-    border-radius: 4px;
-}
-
-#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-thumb,
-#unified-settings-modal .modal .settings-content::-webkit-scrollbar-thumb {
-    background: var(--accent-primary);
-    border-radius: 4px;
-}
-
-#unified-settings-modal .modal .scene-settings-content::-webkit-scrollbar-thumb:hover,
-#unified-settings-modal .modal .settings-content::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-secondary);
-}
-
-/* Settings Modal Scrollbar for Firefox */
-#unified-settings-modal .modal .scene-settings-content,
-#unified-settings-modal .modal .settings-content {
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-primary) var(--bg-dark);
-}
-
-/* Make submenus float OVER the canvas, not inside the toolbar */
-.tool-submenu {
-    display: none;
-    position: fixed !important;   /* Changed from absolute to fixed */
-    left: 68px !important;        /* Just right of the 60px toolbar + 8px gap */
-    top: var(--submenu-top, 100px); /* Will be set dynamically via JS */
-    background: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 1000;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    min-width: 48px;
-    backdrop-filter: blur(10px);
-}
-
-/* Optional: Add a little pointer arrow */
-.tool-submenu::before {
-    content: '';
-    position: absolute;
-    left: -6px;
-    top: 16px;
-    width: 0;
-    height: 0;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-    border-right: 8px solid var(--border-color);
-}
-
-/* Make submenu buttons slightly larger and nicer */
-.tool-submenu .tool-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 1.2rem;
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(45, 55, 72, 0.8);
-}
-
-.tool-submenu .tool-btn:hover {
-    background: var(--accent-primary);
-    color: #000;
-    transform: scale(1.05);
-}
-
-/* Menu parent button styling */
-.tool-btn.menu-parent {
-    position: relative;
-}
-
-.tool-btn.menu-parent:hover .tool-submenu {
-    display: flex;
-}
-
-/* Tooltip styling */
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    left: 100%;
+#panel-toggle {
+    position: fixed;
+    right: 280px;
     top: 50%;
     transform: translateY(-50%);
-    margin-left: 10px;
-    background: var(--bg-medium);
+    background: var(--bg-dark);
     border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    white-space: nowrap;
+    border-right: none;
+    padding: 10px 4px;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
     z-index: 100;
-    pointer-events: none;
-}
-
-/* Pixel3D-style improvements for toolbat */
-
-/* Modernize tool buttons with better hover effects */
-.tool-btn {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.tool-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 217, 255, 0.1));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: inherit;
-}
-
-.tool-btn:hover::before {
-    opacity: 1;
-}
-
-.tool-btn.active {
-    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
-    transform: translateY(-1px);
-}
-
-/* Add subtle glow to active tools */
-.tool-btn.active::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
-    z-index: -1;
-    opacity: 0.8;
-}
-
-/* Improve toolbar spacing and layout */
-.toolbar {
-    gap: 6px;
-    padding: 8px 0;
-    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
-}
-
-/* Add subtle border to separate toolbar from canvas */
-.toolbar {
-    border-right: 1px solid rgba(45, 55, 72, 0.3);
-    box-shadow: 1px 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* Modernize separator lines */
-.separator {
-    background: linear-gradient(to right, transparent, var(--border-color), transparent);
-    height: 1px;
-    width: 80%;
-}
-
-/* Add subtle animation to tool changes */
-@keyframes toolPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.tool-btn.active {
-    animation: toolPulse 0.3s ease;
-}
-
-/* Improve header styling to match Pixel3D */
-header {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-}
-
-/* Add gradient background to header */
-header {
-    background: linear-gradient(135deg, var(--bg-dark), var(--bg-medium));
-}
-
-/* Modernize button styling */
-.btn {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Add subtle glow to primary buttons */
-.btn.primary {
-    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
-    transition: all 0.3s ease;
-}
-
-.btn.primary:hover {
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-    transform: translateY(-1px) scale(1.02);
-}
-
-/* Modernize the workspace area */
-.workspace {
-    background: linear-gradient(to bottom right,
-        rgba(0, 217, 255, 0.01),
-        rgba(255, 0, 110, 0.01),
-        rgba(0, 255, 65, 0.01));
-}
-
-/* Add subtle grid pattern to workspace background */
-#canvas-wrapper {
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 20px 20px;
-}
-
-/* Modernize right panel styling */
-.right-panel {
-    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
-    border-left: 1px solid rgba(45, 55, 72, 0.3);
-    box-shadow: -1px 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* Add subtle animation to panel toggle */
-#panel-toggle {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--accent-tertiary);
+    transition: right 0.3s ease-in-out;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
 }
 
+#panel-toggle.closed-toggle {
+    right: 0;
+}
+
 #panel-toggle:hover {
+    background: var(--bg-medium);
     transform: translateY(-50%) scale(1.1);
     box-shadow: -2px 0 12px rgba(0, 217, 255, 0.3);
 }
 
-/* Modernize section titles */
-.section-title {
-    font-family: 'Press Start 2P', cursive;
-    letter-spacing: 1px;
-    text-shadow: 0 0 5px rgba(0, 217, 255, 0.2);
-    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
-}
+/* ============================================= */
+/* 19. ZOOM OVERLAY */
+/* ============================================= */
 
-/* Add subtle hover effects to panel sections */
-.panel-section {
-    transition: all 0.2s ease;
-    border-bottom: 1px solid rgba(45, 55, 72, 0.3);
-}
-
-.panel-section:hover {
-    background: rgba(0, 255, 65, 0.01);
-    border-bottom-color: rgba(0, 255, 65, 0.2);
-}
-
-/* Modernize slider controls */
-input[type="range"] {
-    -webkit-appearance: none;
-    height: 6px;
-    background: linear-gradient(to right,
-        rgba(0, 255, 65, 0.2),
-        rgba(0, 217, 255, 0.2));
-    border-radius: 3px;
-    outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--accent-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid var(--bg-dark);
-    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
-}
-
-/* Add subtle animations to interactive elements */
-@keyframes subtlePulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.9; }
-    100% { opacity: 1; }
-}
-
-/* Apply subtle pulse to active elements */
-.tool-btn.active,
-.btn.primary {
-    animation: subtlePulse 2s ease infinite;
-}
-
-/* Modernize the overall app with subtle gradients */
-body {
-    background: linear-gradient(135deg,
-        var(--bg-darkest) 0%,
-        var(--bg-dark) 50%,
-        var(--bg-medium) 100%);
-    background-attachment: fixed;
-}
-
-/* Add subtle scanline effect like Pixel3D */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(
-        rgba(0, 255, 65, 0.01) 1px,
-        transparent 1px),
-        linear-gradient(90deg,
-        rgba(0, 217, 255, 0.01) 1px,
-        transparent 1px);
-    background-size: 2px 2px, 2px 2px;
+.zoom-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--text-secondary);
     pointer-events: none;
-    z-index: 9999;
-    opacity: 0.3;
+    border: 1px solid var(--border-color);
 }
+
+/* ============================================= */
+/* 20. DROPINS / TABBED PANELS */
+/* ============================================= */
+
+.dropins-container {
+    width: var(--right-panel-width);
+    position: fixed;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height) - 160px);
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+}
+
+.dropins-container * {
+    box-sizing: border-box;
+}
+
+.dropins-container.right {
+    right: 0;
+}
+
+.dropins-container .tabs {
+    position: absolute;
+    width: 4em;
+    left: -4em;
+}
+
+.dropins-container.right .tabs {
+    left: -4em;
+}
+
+.dropins-container .tabs .tab {
+    background-color: var(--bg-medium);
+    color: var(--text-primary);
+    padding: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.dropins-container.right .tabs .tab {
+    border-radius: 5px 0 0 5px;
+    border-right: 2px solid var(--border-color);
+}
+
+.dropins-container .tabs .tab:hover {
+    background-color: var(--bg-light);
+}
+
+.dropins-container .tabs .tab.active {
+    background-color: var(--accent-primary);
+    color: #000;
+}
+
+.dropins-container .tabs .tab i {
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.dropins-container .tabs .tab .tab-name {
+    text-align: center;
+}
+
+.dropins-container .tabs .tab .tab-name span {
+    writing-mode: vertical-lr;
+    text-orientation: sideways;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.dropins-container .contents {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.dropins-container .contents .content {
+    max-height: 100%;
+    display: block;
+    overflow: auto;
+}
+
+.dropins-container .contents aside.active {
+    display: block;
+}
+
+/* Panel headers and bodies */
+#layers-panel .section-header,
+#tilemap-panel .section-header {
+    background: var(--bg-medium);
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#layers-panel .section-body,
+#tilemap-panel .section-body {
+    padding: 12px;
+}
+
+#tilemap-panel .close-panel-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+#layers-panel .slide-out-btn {
+    /* Positioned as needed */
+}
+
+/* Hide original side panel when using dropins */
+#side-panel {
+    display: none;
+}
+
+/* ============================================= */
+/* 21. UTILITY CLASSES */
+/* ============================================= */
+
+.hidden {
+    display: none;
+}
+
+/* ============================================= */
+/* 22. ANIMATIONS */
+/* ============================================= */
+
+@keyframes animate-background {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes subtleGlow {
+    0% {
+        text-shadow: 0 0 8px var(--border-glow);
+        color: var(--accent-primary);
+    }
+    50% {
+        text-shadow: 0 0 12px rgba(0, 255, 65, 0.4);
+        color: rgba(0, 255, 65, 0.9);
+    }
+    100% {
+        text-shadow: 0 0 15px var(--border-glow);
+        color: var(--accent-primary);
+    }
+}
+
+@keyframes toolPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes subtlePulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================= */
+/* 23. RESPONSIVE ADJUSTMENTS */
+/* ============================================= */
+
+@media (max-width: 320px) {
+    .mirror-axis-option {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .mirror-info {
+        justify-content: center;
+    }
+
+    .mirror-grid {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* ======================================================================================== */
+/* END OF PIXEL ART STUDIO PRO STYLESHEET */
+/* ======================================================================================== */

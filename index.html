@@ -4,12 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Studio Pro</title>
+    <title>Pixel Art - Studio Pro</title>
+    <!-- Fonts & Icons -->
     <link rel="icon" type="image/png" href="/pixelArt/favicon-96x96.png" sizes="96x96" />
-    <!-- Local Font Awesome Implementation -->
-    <link rel="stylesheet" href="fonts/fontawesome-free-6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/tutorials.css">
+    <!-- Google Fonts - Press Start 2P -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- Custom Font -->
     <style>
         @font-face {
@@ -19,7 +18,25 @@
             font-style: normal;
             font-display: swap;
         }
+
+        @font-face {
+            font-family: 'Inter';
+            src: url('fonts/inter-bold.woff2') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
     </style>
+    <!-- Local Font Awesome Implementation -->
+    <link rel="stylesheet" href="fonts/fontawesome-free-6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/right-panel.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/tutorials.css">
+
+
+
 </head>
 
 <body>
@@ -38,18 +55,16 @@
             <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
 
             <div class="zoom-controls-header">
-                <button id="zoomOutBtn" class="btn icon-only" title="Zoom Out (Ctrl/-)"><i
-                        class="fas fa-minus"></i></button>
+                <button id="zoomOutBtn" class="btn icon-only" title="Zoom Out (Ctrl/-)"><i class="fas fa-minus"></i></button>
                 <span id="zoomDisplay" class="zoom-display">1x</span>
-                <button id="zoomInBtn" class="btn icon-only" title="Zoom In (Ctrl/+)"><i
-                        class="fas fa-plus"></i></button>
-                <button id="zoomResetBtn" class="btn icon-only" title="Reset Zoom (0)"><i
-                        class="fas fa-compress-arrows-alt"></i></button>
+                <button id="zoomInBtn" class="btn icon-only" title="Zoom In (Ctrl/+)"><i class="fas fa-plus"></i></button>
+                <button id="zoomResetBtn" class="btn icon-only" title="Reset Zoom (0)"><i class="fas fa-compress-arrows-alt"></i></button>
             </div>
             <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
 
             <button id="loadProjectBtn" class="btn"><i class="fas fa-folder-open"></i> Load</button>
             <button id="saveProjectBtn" class="btn primary"><i class="fas fa-save"></i> Save</button>
+            <button id="saveToBrowserBtn" class="btn"><i class="fas fa-cloud"></i> Save to Browser</button>
             <button id="downloadSheetBtn" class="btn"><i class="fas fa-file-export"></i> Export</button>
         </div>
     </header>
@@ -60,18 +75,22 @@
 
         <!-- LEFT TOOLBAR -->
         <aside class="toolbar" id="tool-buttons">
-            <button class="tool-btn active" data-tool="pencil" title="Pencil (P)"><i
-                    class="fas fa-pencil-alt"></i></button>
-            <button class="tool-btn" data-tool="brush" title="Brush (B)"><i class="fas fa-paint-brush"></i></button>
-            <button class="tool-btn" data-tool="eraser" title="Eraser (E)"><i class="fas fa-eraser"></i></button>
+            <!-- Drawing Tools Menu -->
+            <div class="tool-btn menu-parent" data-tooltip="**Drawing Tools**
+Hover to see all available drawing tools">
+                <i class="fas fa-pencil-alt"></i>
+                <div class="tool-submenu">
+                    <div class="tool-btn" data-action="tool" data-type="pencil" data-tooltip="**Pencil Tool**
+Draw single pixels"><i class="fas fa-pencil-alt"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="brush" data-tooltip="**Brush Tool**
+Draw with soft edges"><i class="fas fa-paint-brush"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="eraser" data-tooltip="**Eraser Tool**
+Erase pixels"><i class="fas fa-eraser"></i></div>
+                </div>
+            </div>
             <div class="separator"></div>
-            <button class="tool-btn" data-tool="bucket" title="Fill Bucket (F)"><i
-                    class="fas fa-fill-drip"></i></button>
-            <button class="tool-btn" data-tool="mirror" title="Mirror (X)"><i class="fas fa-columns"></i></button>
-            <button class="tool-btn" data-tool="dither" title="Dither (D)"><i class="fas fa-th"></i></button>
-            <button class="tool-btn" data-tool="eyedropper" title="Color Picker (I)"><i
-                    class="fas fa-eye-dropper"></i></button>
-            <button class="tool-btn" data-tool="move" title="Move (M)"><i class="fas fa-arrows-alt"></i></button>
+            <button class="tool-btn" data-tool="bucket" title="Fill Bucket (F)"><i class="fas fa-fill-drip"></i></button>
+                      <button class="tool-btn" data-tool="eyedropper" title="Color Picker (I)"><i class="fas fa-eye-dropper"></i></button>
             <div class="separator"></div>
             <!-- Shapes Menu -->
             <div class="tool-btn menu-parent" data-tooltip="**Shapes**
@@ -86,10 +105,31 @@ Draw rectangles and squares"><i class="far fa-square"></i></div>
 Draw circles and ellipses"><i class="far fa-circle"></i></div>
                 </div>
             </div>
+            <!-- Selection Tools Menu -->
+            <div class="tool-btn menu-parent" data-tooltip="**Selection Tools**
+Hover to see all available selection tools">
+                <i class="fas fa-mouse-pointer"></i>
+                <div class="tool-submenu">
+                    <div class="tool-btn" data-action="tool" data-type="select-rect" data-tooltip="**Rectangular Selection**
+Draw rectangular selections"><i class="far fa-square"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
+Draw circular selections"><i class="far fa-circle"></i></div>
+                    <div class="tool-btn" data-action="tool" data-type="select-lasso" data-tooltip="**Lasso Selection**
+Draw freehand selections"><i class="fas fa-draw-polygon"></i></div>
+                </div>
+            </div>
+
+            <button class="tool-btn" id="moveBtn" title="Move ()"><i class="fas fa-hand-alt"></i></button>
+
+
             <div class="toolbar-spacer"></div>
             <button class="tool-btn" id="layersBtn" title="Layers (L)"><i class="fas fa-layer-group"></i></button>
-            <button class="tool-btn" id="filtersBtn" title="Filters"><i class="fas fa-magic"></i></button>
             <button class="tool-btn" id="tilemapBtn" title="Tilemap"><i class="fas fa-th"></i></button>
+
+            <!-- Settings at bottom like pixel3d-main -->
+            <div style="margin-top: auto;"></div>
+            <div class="tool-divider"></div>
+            <button class="tool-btn" id="keyboardBtn" title="Shortcuts"><i class="fas fa-keyboard"></i></button>
             <button class="tool-btn" id="settingsBtn" title="Settings (S)"><i class="fas fa-cog"></i></button>
         </aside>
 
@@ -113,23 +153,19 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
             <!-- TIMELINE PANEL -->
             <div class="timeline-panel">
                 <div class="timeline-controls">
-                    <div style="display:flex; gap:5px;">
+                    <div class="fps-controls">
                         <button id="playBtn" class="btn icon-only"><i class="fas fa-play"></i></button>
                         <button id="stopBtn" class="btn icon-only"><i class="fas fa-stop"></i></button>
-                        <div style="width:10px"></div>
-                        <label
-                            style="font-size:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">
+                        <div class="fps-spacer"></div>
+                        <label class="fps-label">
                             FPS: <span id="fpsDisplay">12</span>
-                            <input type="range" id="fpsSlider" min="1" max="60" value="12" style="width:80px">
+                            <input type="range" id="fpsSlider" min="1" max="60" value="12" class="fps-slider">
                         </label>
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        <button id="addFrameBtn" class="btn icon-only" title="Add Frame"><i
-                                class="fas fa-plus"></i></button>
-                        <button id="duplicateFrameBtn" class="btn icon-only" title="Duplicate"><i
-                                class="fas fa-copy"></i></button>
-                        <button id="deleteFrameBtn" class="btn icon-only" title="Delete"><i
-                                class="fas fa-trash"></i></button>
+                    <div class="frame-controls">
+                        <button id="addFrameBtn" class="btn icon-only" title="Add Frame"><i class="fas fa-plus"></i></button>
+                        <button id="duplicateFrameBtn" class="btn icon-only" title="Duplicate"><i class="fas fa-copy"></i></button>
+                        <button id="deleteFrameBtn" class="btn icon-only" title="Delete"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
                 <div id="frames-list" class="timeline-frames">
@@ -139,43 +175,193 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
         </div>
 
-        <!-- RIGHT PANEL (SLIDE OUT) -->
-        <aside class="right-panel" id="side-panel">
+        <!-- UNIFIED TABBED PANEL -->
+        <div class="dropins-container right">
 
-            <div id="panel-preview" class="panel-section">
-                <div class="section-title"><span>Preview</span></div>
-                <div id="preview-container"
-                    style="width:120px; height:120px; background:#e0e0e0; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-color); margin:0 auto; position:relative;">
-                    <canvas id="previewCanvas" style="width:100%; height:100%; image-rendering: pixelated;"></canvas>
-                    <div id="minimap-overlay"
-                        style="position:absolute; pointer-events:none; border:1px solid var(--accent-primary); background:rgba(0,255,65,0.2); display:none;">
+    <div class="tabs panel-tabs">
+        <button class="tab panel-tab active" data-tab="tools" title="Tools" data-content="unified-panel">
+            <i class="fas fa-tools"></i>
+            <span class="tab-name tab-label">Tools</span>
+        </button>
+        <button class="tab panel-tab" data-tab="layers" title="Layers" data-content="layers-panel">
+            <i class="fas fa-layer-group"></i>
+            <span class="tab-name tab-label">Layers</span>
+        </button>
+        <button class="tab panel-tab" data-tab="tilemap" title="Tilemap" data-content="tilemap-panel">
+            <i class="fas fa-th"></i>
+            <span class="tab-name tab-label">Tilemap</span>
+        </button>
+    </div>
+
+
+    <div class="right-panel contents">
+        <aside class="content panel-tab-content" data-tab-content="tools" id="unified-panel" >
+            <div>
+                <div class="panel-section">
+                    <!-- Original right panel content goes here -->
+                <div id="panel-preview" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Preview</span>
+                        </div>
+                         <div class="layer-controls">
+                            <button class="section-toggle" data-target="preview-container" title="Toggle Preview Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="preview-container">
+                            <canvas id="previewCanvas"></canvas>
+                            <div id="minimap-overlay"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="panel-palette" class="panel-section">
-                <div class="section-title">
-                    <span>Palette</span>
-                    <div>
-                        <button id="saveColorBtn" title="Save Color"
-                            style="background:none; border:none; color:var(--accent-primary); cursor:pointer;"><i
-                                class="fas fa-plus"></i></button>
-                        <button id="importPaletteUrlBtn" title="Import Palette"
-                            style="background:none; border:none; color:var(--text-secondary); cursor:pointer;"><i
-                                class="fas fa-cloud-download-alt"></i></button>
+                <div id="panel-palette" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Palette</span>
+                        </div>
+                         <div class="layer-controls">
+                            <button class="section-toggle" data-target="palette-container" title="Toggle Palette Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="palette-container" class="palette-controls">
+                            <button id="saveColorBtn" title="Save Color" class="palette-control-btn">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button id="importPaletteUrlBtn" title="Import Palette" class="palette-control-btn">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
+                        </div>
+                        <div class="palette-controls">
+                            <input type="color" id="colorPicker" value="#00ff41" class="color-picker-input">
+                            <input type="text" id="colorHex" value="#00ff41" class="color-hex-input">
+                        </div>
+                        <div id="palette-container" class="palette-grid"></div>
                     </div>
                 </div>
-                <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
-                    <input type="color" id="colorPicker" value="#00ff41"
-                        style="width:30px; height:30px; padding:0; border:none; background:none;">
-                    <input type="text" id="colorHex" value="#00ff41"
-                        style="background:transparent; border:1px solid var(--border-color); color:var(--text-primary); width:70px; padding:4px; font-family:monospace;">
-                </div>
-                <div id="palette-container" class="palette-grid">
-                </div>
-            </div>
 
-            <div id="mirror-options" class="panel-section hidden">
+                
+                <div id="panel-tool-options" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Tools Options</span>
+                        </div>
+                         <div class="layer-controls">
+                            <button class="section-toggle" data-target="tools-container" title="Toggle Tools Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="tools-container" class="tool-options-control brush-size-control">
+                            <label class="tool-option-label">Brush Size </label>
+                            <div class="slider-value-container">
+                                <div class="slider-container" style="width: 80%;">
+                                    <input type="range" id="brushSizeSlider" min="1" max="20" value="1"
+                                        class="tool-option-slider">
+                                </div>
+                                <div class="value-container" style="width: 20%; text-align: right;">
+                                    <span id="brushSizeDisplay">1</span>px
+                                </div>
+                            </div>
+                            <div class="preset-brush-sizes">
+                                <button class="preset-brush-size" data-size="1">1</button>
+                                <button class="preset-brush-size" data-size="2">2</button>
+                                <button class="preset-brush-size" data-size="3">3</button>
+                                <button class="preset-brush-size" data-size="4">4</button>
+                                <button class="preset-brush-size" data-size="5">5</button>
+                            </div>
+                        </div>
+                        <div class="tool-options-control opacity-control">
+                            <label class="tool-option-label">Opacity</label>
+                            <div class="slider-value-container">
+                                <div class="slider-container" style="width: 80%;">
+                                    <input type="range" id="opacitySlider" min="0" max="100" value="100"
+                                        class="tool-option-slider">
+                                </div>
+                                <div class="value-container" style="width: 20%; text-align: right;">
+                                    <span id="opacityDisplay">100</span>%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tool-options-control blur-control">
+                            <label class="tool-option-label">Brush Blur </label>
+                            <div class="slider-value-container">
+                                <div class="slider-container" style="width: 80%;">
+                                    <input type="range" id="blurSlider" min="0" max="10" value="0"
+                                        class="tool-option-slider">
+                                </div>
+                                <div class="value-container" style="width: 20%; text-align: right;">
+                                    <span id="blurDisplay">0</span>px
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-transform" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Transform</span>
+                        </div>
+                         <div class="layer-controls">
+                            <button class="section-toggle" data-target="transform-container" title="Toggle Transform Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="transform-container">
+                            <button class="tool-btn" data-tool="move" title="Move (M)"><i
+                                    class="fas fa-arrows-alt"></i></button>
+                            <button class="tool-btn" id="rotateBtn" title="RotatecClockwise (L)"><i
+                                    class="fas fa-rotate"></i></button>
+                            <button class="tool-btn" id="flipBtn" title="Flip Horizontal"><i
+                                    class="fas fa-flipboard"></i></button>
+                            <button class="tool-btn" id="alignCenterBtn" title="Aligh Center (S)"><i
+                                    class="fas fa-align-center"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-effects" class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Effects</span>
+                        </div>
+                          <div class="layer-controls">
+                            <button class="section-toggle" data-target="effects-container" title="Toggle Effects Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div id="effects-container">
+                            <button class="tool-btn" data-tool="tool" title="Mirror (X)" data-type="mirror"
+                                data-tooltip="**Mirror Tool**" data-content="mirror-options"><i class="fas fa-columns"></i></button>
+                            <button class="tool-btn" data-tool="tool" title="Dither (D)" data-type="dither"
+                                data-tooltip="**Dither Tool**" data-content="dither-options"><i class="fas fa-th"></i></button>
+                            <button class="tool-btn" data-tool="tool" title="Contrast" data-type="contrast"
+                                data-tooltip="**Contrast Tool**
+Increase brightness/darkness of pixels" data-content="contrast-options"><i class="fas fa-sun"></i></button>
+                            <button class="tool-btn" data-tool="tool" id="filtersBtn" title="Filters"
+                                data-type="filters" data-tooltip="**Custom Filters**
+Invert all colors" data-content="filters-list"><i class="fas fa-magic"></i></button>
+                        </div>
+
+
+                         <div id="mirror-options" class="sub-panel-section">
                 <div class="section-title">
                     <span>Mirror Options</span>
                     <div style="font-size:10px; color:var(--text-secondary); margin-top:4px;">
@@ -268,93 +454,125 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                         Select mirror axis before using the mirror tool
                     </small>
                 </div>
-            </div>
+                            </div>
 
-            <div id="panel-tool-options" class="panel-section">
-                <div class="section-title"><span>Tools Options</span></div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:11px; display:block; color:var(--text-secondary); margin-bottom:4px;">Brush
-                        Size <span id="brushSizeDisplay">1</span>px</label>
-                    <input type="range" id="brushSizeSlider" min="1" max="20" value="1" style="width:100%;">
-                    <div style="display:flex; gap:3px; margin-top:5px; flex-wrap:wrap;">
-                        <button class="preset-brush-size" data-size="1"
-                            style="background:var(--bg-light); border:1px solid var(--border-color); color:var(--text-primary); padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px; min-width:24px;">1</button>
-                        <button class="preset-brush-size" data-size="2"
-                            style="background:var(--bg-light); border:1px solid var(--border-color); color:var(--text-primary); padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px; min-width:24px;">2</button>
-                        <button class="preset-brush-size" data-size="3"
-                            style="background:var(--bg-light); border:1px solid var(--border-color); color:var(--text-primary); padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px; min-width:24px;">3</button>
-                        <button class="preset-brush-size" data-size="4"
-                            style="background:var(--bg-light); border:1px solid var(--border-color); color:var(--text-primary); padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px; min-width:24px;">4</button>
-                        <button class="preset-brush-size" data-size="5"
-                            style="background:var(--bg-light); border:1px solid var(--border-color); color:var(--text-primary); padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px; min-width:24px;">5</button>
+
+                        <div id="dither-options" class="sub-panel-section hidden">
+
+                            <p>Dithering applies a checkerboard pattern to simulate color blending.</p>
+                            <p> Select dithering style and intensity below:</p>
+                            </div>
+
+
+                        <div id="contrast-options" class="sub-panel-section hidden">
+
+                                <p>Adjust the contrast level to increase or decrease the difference between light and dark pixels.</p>
+                                <p> add slider to lighten / darken the pixels on a level</p>
+                            </div>
+
+                        <div id="filters-list" class="sub-panel-section hidden">
+                            <!-- Filters will be loaded here -->
+                        </div>
+
+
                     </div>
                 </div>
-                <div>
-                    <label
-                        style="font-size:11px; display:block; color:var(--text-secondary); margin-bottom:4px;">Opacity
-                        <span id="opacityDisplay">100</span>%</label>
-                    <input type="range" id="opacitySlider" min="0" max="100" value="100" style="width:100%;">
-                </div>
 
-                <div style="margin-top:10px;">
-                    <label style="font-size:11px; display:block; color:var(--text-secondary); margin-bottom:4px;">Brush
-                        Blur <span id="blurDisplay">0</span>px</label>
-                    <input type="range" id="blurSlider" min="0" max="10" value="0" style="width:100%;">
-                </div>
+         
 
-
+          
             </div>
-
-            <div id="panel-layers" class="panel-section hidden">
-                <div class="section-title">
-                    <span>Layers</span>
-                    <button id="addLayerBtn"
-                        style="background:none; border:none; color:var(--accent-primary); cursor:pointer;"><i
-                            class="fas fa-plus-circle"></i></button>
-                </div>
-                <div id="layers-list" class="layers-list" style="max-height: 400px;">
-                </div>
-            </div>
-
-            <div id="panel-filters" class="panel-section hidden">
-                <div class="section-title"><span>Filters</span></div>
-                <div id="filters-list" style="display: flex; flex-direction: column; gap: 8px;">
-                    <!-- Filter buttons will be added here -->
-                </div>
-            </div>
-
-            <div id="panel-tilemap" class="panel-section hidden">
-                <div class="section-title"><span>Tilemap Preview</span></div>
-                <div class="tilemap-container">
-                    <!-- Original tilemap squares -->
-                    <div class="tilemap-grid" id="tilemapGrid">
-                        <!-- Tilemap squares will be generated here -->
-                    </div>
-
-                    <!-- Seamless mode toggle and controls -->
-                    <div class="tilemap-controls">
-                        <button id="toggleSeamlessModeBtn" class="btn" style="width: 100%; margin-bottom: 8px;">
-                            <span id="toggleSeamlessModeText">Enable Seamless Grid</span>
-                        </button>
-                        <button id="clearTilemapBtn" class="btn secondary" style="width: 100%;">Clear All</button>
-                    </div>
-
-                    <div class="tilemap-info">
-                        <small
-                            style="color: var(--text-secondary); display: block; margin-top: 8px; text-align: center;">
-                            Click squares to activate tilemap preview<br>
-                            Enable seamless grid to see 3x3 tiling around canvas<br>
-                            Drawing near edges will wrap to opposite side
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-
-
 
 
         </aside>
+
+
+        <!-- LAYER PANEL (SLIDE OUT) -->
+        <aside class="content panel-tab-content" data-tab-content="layers" id="layers-panel">
+            <div>
+                <div class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Layers</span>
+                        </div>
+                        <div class="layer-controls">
+                            <button class="section-toggle" data-target="layers-container" title="Toggle Layers Section">
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div class="section-body">
+                        <div id="layers-container" class="folder-controls">
+                            <button class="folder-btn" id="add-group-btn" title="Add Group">
+                                <i class="fas fa-folder-plus"></i>
+                            </button>
+                            <button class="folder-btn" id="expand-all-btn" title="Expand All">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                            <button class="folder-btn" id="collapse-all-btn" title="Collapse All">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                            </button>
+                        </div>
+                        </div>
+                        <div class="section-body">
+                            <button id="addLayerBtn" class="layer-control-btn" title="Add Layer">
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                            <div id="layers-list" class="layers-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+   
+        </aside>
+
+        <!-- TILMAP PANEL (SLIDE OUT) -->
+        <aside class="content panel-tab-content" data-tab-content="tilemap" id="tilemap-panel">
+            <div>
+                <div class="panel-section">
+                    <div class="section-header">
+                        <div class="label-group">
+                            <span>Tilemap Preview</span>
+                        </div>
+                        <button class="section-toggle" data-target="tilemap-container" title="Toggle Tilemap Preview Section">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div id="tilemap-container" class="tilemap-container">
+                            <!-- Original tilemap squares -->
+                            <div class="tilemap-grid" id="tilemapGrid">
+                                <!-- Tilemap squares will be generated here -->
+                            </div>
+
+                            <!-- Seamless mode toggle and controls -->
+                            <div class="tilemap-controls">
+                                <button id="toggleSeamlessModeBtn" class="btn" style="width: 100%; margin-bottom: 8px;">
+                                    <span id="toggleSeamlessModeText">Enable Seamless Grid</span>
+                                </button>
+                                <button id="clearTilemapBtn" class="btn secondary" style="width: 100%;">Clear All</button>
+                            </div>
+
+                            <div class="tilemap-info">
+                                <small
+                                    style="color: var(--text-secondary); display: block; margin-top: 8px; text-align: center;">
+                                    Click squares to activate tilemap preview<br>
+                                    Enable seamless grid to see 3x3 tiling around canvas<br>
+                                    Drawing near edges will wrap to opposite side
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+        
+
 
         <!-- Floating Toggle -->
         <div id="panel-toggle" title="Toggle Panel">
@@ -363,27 +581,28 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
     </div>
 
+    <!-- Unified Settings Modal -->
     <div class="modal-overlay" id="unified-settings-modal">
         <div class="modal">
             <header>
                 <div class="modal-title">
                     <i class="fas fa-cog"></i> Settings
                 </div>
-                <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:15px;">
+                <div class="modal-subtitle">
                     Configure your Pixel Art Studio preferences
                 </div>
 
                 <div class="settings-tabs">
-                    <button class="settings-tab active" data-tab="general" id="tab-general">
+                    <button class="settings-tab active" data-content="settings-general" id="tab-general">
                         <i class="fas fa-sliders-h"></i> General
                     </button>
-                    <button class="settings-tab" data-tab="scene" id="tab-scene">
+                    <button class="settings-tab" data-content="settings-scene" id="tab-scene">
                         <i class="fas fa-image"></i> Art
                     </button>
-                    <button class="settings-tab" data-tab="export" id="tab-export">
+                    <button class="settings-tab" data-content="settings-export" id="tab-export">
                         <i class="fas fa-download"></i> Export
                     </button>
-                    <button class="settings-tab" data-tab="tutorial" id="tab-tutorial">
+                    <button class="settings-tab" data-content="settings-tutorial" id="tab-tutorial">
                         <i class="fas fa-graduation-cap"></i> Tutorial
                     </button>
                 </div>
@@ -391,193 +610,200 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
             <div class="modal-content-wrapper">
 
-                <div class="settings-tab-content active" data-tab-content="general">
+                <div class="settings-tab-content active" id="settings-general">
                     <div class="settings-content">
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-grid" checked>
-                                <span class="checkmark"></span> Show Grid
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-tooltips" checked>
-                                <span class="checkmark"></span> Show Tooltips
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-helpers" checked>
-                                <span class="checkmark"></span> Show Helpers
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-darkmode" checked>
-                                <span class="checkmark"></span> Dark Mode
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-autosave" checked>
-                                <span class="checkmark"></span> Auto Save
-                            </label>
+                        <div class="settings-section">
+                            <div class="section-heading">General Settings</div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-grid" checked>
+                                    <span class="checkmark"></span> Show Grid
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-tooltips" checked>
+                                    <span class="checkmark"></span> Show Tooltips
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-helpers" checked>
+                                    <span class="checkmark"></span> Show Helpers
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-darkmode" checked>
+                                    <span class="checkmark"></span> Dark Mode
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-autosave" checked>
+                                    <span class="checkmark"></span> Auto Save
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-tab-content" data-tab-content="scene">
+                <div class="settings-tab-content" id="settings-scene">
                     <div class="scene-settings-content">
-                        <div class="property-group">
-                            <label class="property-label">
-                                Canvas Size:
-                            </label>
-                            <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
-                                <input type="number" id="setting-width" value="32" min="4" max="128"
-                                    style="flex:1; padding:4px; font-family:monospace; text-align:center;">
-                                <input type="number" id="setting-height" value="32" min="4" max="128"
-                                    style="flex:1; padding:4px; font-family:monospace; text-align:center;">
+                        <div class="settings-section">
+                            <div class="section-heading">Canvas Settings</div>
+                            <div class="property-group">
+                                <label class="property-label">
+                                    Canvas Size:
+                                </label>
+                                <div style="display:flex; gap:5px; margin-top:8px; margin-bottom:15px;">
+                                    <input type="number" id="setting-width" value="32" min="4" max="128" style="flex:1; padding:4px; font-family:monospace; text-align:center;">
+                                    <input type="number" id="setting-height" value="32" min="4" max="128" style="flex:1; padding:4px; font-family:monospace; text-align:center;">
+                                </div>
+                                <button id="apply-canvas-size" class="btn" style="width:100%; margin-bottom:15px;">Apply Resize</button>
                             </div>
-                            <button id="apply-canvas-size" class="btn" style="width:100%; margin-bottom:15px;">Apply
-                                Resize</button>
+                        </div>
+                        <div class="settings-section">
+                            <div class="section-heading">Display Settings</div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-show-minimap" checked>
+                                    <span class="checkmark"></span> Show Minimap
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-snap-to-grid">
+                                    <span class="checkmark"></span> Snap to Grid
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-show-coords" checked>
+                                    <span class="checkmark"></span> Show Coordinates
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-show-minimap" checked>
-                                <span class="checkmark"></span> Show Minimap
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-snap-to-grid">
-                                <span class="checkmark"></span> Snap to Grid
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-show-coords" checked>
-                                <span class="checkmark"></span> Show Coordinates
-                            </label>
-                        </div>
-
-                        <div class="property-group">
-                            <label class="property-label">
-                                <input type="checkbox" id="setting-background-enabled" checked>
-                                Enable Custom Background
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">
-                                Background Color:
-                                <input type="color" id="setting-background-color" value="#1a1a2e">
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-ambient-light" checked>
-                                <span class="checkmark"></span> Enable Ambient Light
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">
-                                Ambient Light Color:
-                                <input type="color" id="setting-ambient-color" value="#ffffff">
-                            </label>
+                        <div class="settings-section">
+                            <div class="section-heading">Visual Settings</div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-background-enabled" checked>
+                                    <span class="checkmark"></span> Enable Custom Background
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="property-label">
+                                    Background Color:
+                                    <input type="color" id="setting-background-color" value="#1a1a2e">
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-ambient-light" checked>
+                                    <span class="checkmark"></span> Enable Ambient Light
+                                </label>
+                            </div>
+                            <div class="property-group">
+                                <label class="property-label">
+                                    Ambient Light Color:
+                                    <input type="color" id="setting-ambient-color" value="#ffffff">
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-tab-content" data-tab-content="export">
+                <div class="settings-tab-content" id="settings-export">
                     <div class="export-settings-content">
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="setting-export-transparent" checked>
-                                <span class="checkmark"></span> Export with Transparent Background
-                            </label>
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">
-                                Export Resolution:
-                                <select id="setting-export-resolution"
-                                    style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; color: var(--text-primary); width: 100%; margin-top: 6px;">
-                                    <option value="24x24">24×24 - Game Icon</option>
-                                    <option value="36x36">36×36 - Game Icon</option>
-                                    <option value="48x48">48×48 - Game Icon</option>
-                                    <option value="128x128">128×128 - Game Sprite</option>
-                                    <option value="512x512">512×512 - Game Texture</option>
-                                    <option value="1024x1024">1024×1024 - High-res Texture</option>
+                        <div class="settings-section">
+                            <div class="section-heading">Export Options</div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="setting-export-transparent" checked>
+                                    <span class="checkmark"></span> Export with Transparent Background
+                                </label>
 
-                                    <option value="1920x1080">1920×1080 - Full HD</option>
-                                    <option value="2560x1440">2560×1440 - 2K</option>
-                                    <option value="3840x2160">3840×2160 - 4K</option>
-                                    <option value="custom">Custom Size</option>
-                                </select>
-                            </label>
+                                <label class="property-label">
+                                    Export Resolution:
+                                    <select id="setting-export-resolution" style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; color: var(--text-primary); width: 100%; margin-top: 6px;">
+                                        <option value="24x24">24×24 - Game Icon</option>
+                                        <option value="36x36">36×36 - Game Icon</option>
+                                        <option value="48x48">48×48 - Game Icon</option>
+                                        <option value="128x128">128×128 - Game Sprite</option>
+                                        <option value="512x512">512×512 - Game Texture</option>
+                                        <option value="1024x1024">1024×1024 - High-res Texture</option>
+                                        <option value="1920x1080">1920×1080 - Full HD</option>
+                                        <option value="2560x1440">2560×1440 - 2K</option>
+                                        <option value="3840x2160">3840×2160 - 4K</option>
+                                        <option value="custom">Custom Size</option>
+                                    </select>
+                                </label>
+                                <label class="property-label">
+                                    Custom Width:
+                                    <input type="number" id="setting-custom-width" value="1920" min="100" max="8000">
+                                </label>
+                                <label class="property-label">
+                                    Custom Height:
+                                    <input type="number" id="setting-custom-height" value="1080" min="100" max="8000">
+                                </label>
+                            </div>
                         </div>
-                        <div class="property-group" id="custom-resolution-group" style="display: none;">
-                            <label class="property-label">
-                                Custom Width:
-                                <input type="number" id="setting-custom-width" value="1920" min="100" max="8000">
-                            </label>
-                            <label class="property-label">
-                                Custom Height:
-                                <input type="number" id="setting-custom-height" value="1080" min="100" max="8000">
-                            </label>
-                        </div>
-                        <div class="property-group"
-                            style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
-                            <button id="exportSettingsBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
-                                <i class="fas fa-cloud-download-alt"></i> Export Defaults
-                            </button>
-                            <button id="saveToBrowserBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
-                                <i class="fas fa-save"></i> Save to Browser
-                            </button>
-                            <button id="loadFromBrowserBtn" class="btn secondary" style="width: 100%;">
-                                <i class="fas fa-download"></i> Load from Browser
-                            </button>
+
+                        <div class="settings-section">
+                            <div class="section-heading">Export Actions</div>
+                            <div class="property-group">
+                                <button id="exportSettingsBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
+                                    <i class="fas fa-cloud-download-alt"></i> Export Defaults
+                                </button>
+                                <button id="saveToBrowserBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
+                                    <i class="fas fa-save"></i> Save to Browser
+                                </button>
+                                <button id="loadFromBrowserBtn" class="btn secondary" style="width: 100%;">
+                                    <i class="fas fa-download"></i> Load from Browser
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-tab-content" data-tab-content="tutorial">
+                <div class="settings-tab-content" id="settings-tutorial">
                     <div class="settings-content">
-                        <div class="property-group">
-                            <label class="property-label">
-                                Tutorial Settings
-                            </label>
-                        </div>
+                        <div class="settings-section">
+                            <div class="section-heading">Tutorial Settings</div>
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="settings-enable-tutorials" checked>
+                                    <span class="checkmark"></span> Enable Tutorials
+                                </label>
+                                <div class="setting-description">
+                                    Show interactive tutorials on startup
+                                </div>
+                            </div>
 
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="enableTutorialsSettings" checked>
-                                <span class="checkmark"></span> Enable Tutorials
-                            </label>
-                            <div
-                                style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
-                                Show interactive tutorials on startup
+                            <div class="property-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="settings-show-hints" checked>
+                                    <span class="checkmark"></span> Show Tutorial Hints
+                                </label>
+                                <div class="setting-description">
+                                    Display helpful hints and tooltips
+                                </div>
                             </div>
                         </div>
 
-                        <div class="property-group">
-                            <label class="setting-label">
-                                <input type="checkbox" id="showTutorialHints" checked>
-                                <span class="checkmark"></span> Show Tutorial Hints
-                            </label>
-                            <div
-                                style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-left: 30px;">
-                                Display helpful hints and tooltips
+                        <!-- Tutorial Actions Group -->
+                        <div class="settings-section">
+                            <div class="section-heading">Tutorial Actions</div>
+                            <div class="property-group">
+                                <button id="startTutorialBtn" class="btn">
+                                    <i class="fas fa-graduation-cap"></i> Start Tutorial
+                                </button>
+                                <button id="resetTutorialBtn" class="btn secondary">
+                                    <i class="fas fa-redo"></i> Reset Tutorial Progress
+                                </button>
                             </div>
-                        </div>
-
-                        <div class="property-group"
-                            style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
-                            <button id="startTutorialBtn" class="btn" style="margin-bottom: 8px; width: 100%;">
-                                <i class="fas fa-graduation-cap"></i> Start Tutorial
-                            </button>
-                            <button id="resetTutorialBtn" class="btn secondary" style="width: 100%;">
-                                <i class="fas fa-redo"></i> Reset Tutorial Progress
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -588,6 +814,223 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                     <button class="btn" id="btn-settings-reset">Reset</button>
                     <button class="btn" id="btn-settings-close">Close</button>
                     <button class="btn primary" id="btn-settings-save">Save Settings</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-overlay" id="keyboard-shortcuts-modal">
+        <div class="modal">
+            <header>
+                <div class="modal-title">
+                    <i class="fas fa-keyboard"></i> Keyboard Shortcuts
+                </div>
+                <div class="modal-subtitle">
+                    Quick reference for all available keyboard shortcuts
+                </div>
+
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-content="shortcuts-tools" id="tab-tools">
+                        <i class="fas fa-tools"></i> Tools
+                    </button>
+                    <button class="settings-tab" data-content="shortcuts-general" id="tab-general">
+                        <i class="fas fa-globe"></i> General
+                    </button>
+                    <button class="settings-tab" data-content="shortcuts-navigation" id="tab-navigation">
+                        <i class="fas fa-compass"></i> Navigation
+                    </button>
+                </div>
+            </header>
+
+            <div class="modal-content-wrapper">
+
+                <div class="settings-tab-content active" id="shortcuts-tools">
+                    <div class="settings-content">
+                        <div class="settings-section">
+                            <div class="section-heading">Drawing Tools</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">P</div>
+                                    <div class="shortcut-description">Pencil Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">B</div>
+                                    <div class="shortcut-description">Brush Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">E</div>
+                                    <div class="shortcut-description">Eraser Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">F</div>
+                                    <div class="shortcut-description">Fill Bucket Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">I</div>
+                                    <div class="shortcut-description">Eyedropper Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">L</div>
+                                    <div class="shortcut-description">Line Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">R</div>
+                                    <div class="shortcut-description">Rectangle Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">C</div>
+                                    <div class="shortcut-description">Circle Tool</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <div class="section-heading">Selection Tools</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">1</div>
+                                    <div class="shortcut-description">Rectangular Selection</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">2</div>
+                                    <div class="shortcut-description">Circular Selection</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">3</div>
+                                    <div class="shortcut-description">Lasso Selection</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <div class="section-heading">Special Tools</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">M</div>
+                                    <div class="shortcut-description">Move Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">D</div>
+                                    <div class="shortcut-description">Dither Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">X</div>
+                                    <div class="shortcut-description">Mirror Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">K</div>
+                                    <div class="shortcut-description">Lighten Tool</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Shift+K</div>
+                                    <div class="shortcut-description">Darken Tool</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-tab-content" id="shortcuts-general">
+                    <div class="settings-content">
+                        <div class="settings-section">
+                            <div class="section-heading">File Operations</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+S</div>
+                                    <div class="shortcut-description">Save Project</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+O</div>
+                                    <div class="shortcut-description">Load Project</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+Z</div>
+                                    <div class="shortcut-description">Undo</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+Y</div>
+                                    <div class="shortcut-description">Redo</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+C</div>
+                                    <div class="shortcut-description">Copy Selection</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+V</div>
+                                    <div class="shortcut-description">Paste Selection</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <div class="section-heading">View Operations</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+0</div>
+                                    <div class="shortcut-description">Reset Zoom</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl++</div>
+                                    <div class="shortcut-description">Zoom In</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Ctrl+-</div>
+                                    <div class="shortcut-description">Zoom Out</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Space</div>
+                                    <div class="shortcut-description">Play/Stop Animation</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-tab-content" id="shortcuts-navigation">
+                    <div class="settings-content">
+                        <div class="settings-section">
+                            <div class="section-heading">Animation Navigation</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">←</div>
+                                    <div class="shortcut-description">Previous Frame</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">→</div>
+                                    <div class="shortcut-description">Next Frame</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Space</div>
+                                    <div class="shortcut-description">Play/Stop Animation</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <div class="section-heading">Canvas Navigation</div>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Mouse Drag</div>
+                                    <div class="shortcut-description">Pan Canvas</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Mouse Wheel</div>
+                                    <div class="shortcut-description">Zoom In/Out</div>
+                                </div>
+                                <div class="shortcut-item">
+                                    <div class="shortcut-key">Click Minimap</div>
+                                    <div class="shortcut-description">Navigate to Area</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                <div class="modal-actions">
+                    <button class="btn" id="btn-keyboard-close">Close</button>
+                    <button class="btn primary" id="btn-keyboard-print">Print Shortcuts</button>
                 </div>
             </footer>
         </div>
@@ -603,6 +1046,10 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
     <script src="js/state.js"></script>
     <script src="js/dom.js"></script>
 
+    <!-- Add tooltip.js for enhanced tooltip support -->
+    <script src="js/tooltip.js"></script>
+
+    <script src="js/right-panel-manager.js"></script>
     <script src="js/tool-manager.js"></script>
     <script src="js/canvas-manager.js"></script>
     <script src="js/layer-manager.js"></script>

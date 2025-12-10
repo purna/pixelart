@@ -1,0 +1,97 @@
+/* Side Tab System - Based on CodePen example */
+.side-tab-container {
+    width: var(--right-panel-width);
+    position: fixed;
+    right: 0;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height) - 160px);
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    background: var(--bg-dark);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 15;
+}
+
+.side-tab-container * {
+    box-sizing: border-box;
+}
+
+.side-tab-container .side-tabs {
+    position: absolute;
+    width: 4em;
+    left: -4em;
+    background: var(--bg-medium);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+}
+
+.side-tab-container .side-tabs .side-tab {
+    background-color: var(--bg-medium);
+    color: var(--text-primary);
+    padding: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.side-tab-container .side-tabs .side-tab:hover {
+    background-color: var(--bg-light);
+}
+
+.side-tab-container .side-tabs .side-tab .tab-icon {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.side-tab-container .side-tabs .side-tab .tab-name {
+    text-align: center;
+    writing-mode: vertical-lr;
+    text-orientation: sideways;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.side-tab-container .side-tabs .side-tab.active {
+    background-color: var(--accent-primary);
+    color: #000;
+}
+
+.side-tab-container .side-contents {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 0;
+    height: 100%;
+    width: calc(var(--right-panel-width) - 4em);
+    margin-left: 4em;
+    overflow: auto;
+}
+
+.side-tab-container .side-contents .content-panel {
+    max-height: 100%;
+    display: none;
+    overflow: auto;
+    padding: 12px;
+    height: 100%;
+}
+
+.side-tab-container .side-contents .content-panel.active {
+    display: block;
+}
+
+/* Hide original panels when using side tabs */
+#side-panel, #layers-panel, #tilemap-panel {
+    display: none;
+}

@@ -57,6 +57,13 @@ const FilterManager = {
      */
     initFilters() {
         const filtersList = document.getElementById('filters-list');
+
+        // Check if filters-list element exists
+        if (!filtersList) {
+            console.warn('filters-list element not found. Filters will not be initialized.');
+            return;
+        }
+
         filtersList.innerHTML = '';
 
         // Available LenaJS filters

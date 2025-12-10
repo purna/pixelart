@@ -25,9 +25,9 @@ const InputHandler = {
         if (e.cancelable && e.target === UI.previewLayer) {
             e.preventDefault();
         }
-        
+
         const { x, y } = this.getCoords(e);
-        console.log('Drawing started at:', x, y, 'Tool:', State.tool, 'Color:', State.color);
+        console.log('Drawing started at:', x, y, 'Tool:', State.tool, 'Color:', State.color, 'isDrawing:', State.isDrawing);
         if (x >= 0 && x < State.width && y >= 0 && y < State.height) {
             ToolManager.start(x, y);
         } else {
@@ -55,12 +55,17 @@ const InputHandler = {
      */
     onDrawEnd(e) {
         if (!State.isDrawing) return;
-        
+
         const { x, y } = this.getCoords(
             e.changedTouches ? { touches: e.changedTouches } : e
         );
-        
+
         ToolManager.end(x, y);
+
+        // NEW: Handle selection end for selection tools
+        if (typeof ToolManager.endSelection === 'function' && State.tool && State.tool.startsWith('select-')) {
+            ToolManager.endSelection(x, y);
+        }
     },
 
     /**
@@ -122,24 +127,73 @@ const InputHandler = {
         
         const key = e.key.toLowerCase();
         
-        // Tool shortcuts
-        const toolShortcuts = {
-            'p': 'pencil',
-            'b': 'brush',
-            'e': 'eraser',
-            'f': 'bucket',
-            'i': 'eyedropper',
-            'l': 'stroke',
-            'r': 'rect',
-            'c': 'circle',
-            'm': 'move',
-            'd': 'dither',
-            'x': 'mirror'
-        };
+       // Tool shortcuts
+       const toolShortcuts = {
+           'p': 'pencil',
+           'b': 'brush',
+           'e': 'eraser',
+           'f': 'bucket',
+           'i': 'eyedropper',
+           'l': 'stroke',
+           'r': 'rect',
+           'c': 'circle',
+           'm': 'move',
+           'd': 'dither',
+           'x': 'mirror',
+           'K': 'lighten',
+           'k': 'darken',
+           '1': 'select-rect',
+           '2': 'select-circle',
+           '3': 'select-lasso'
+       };
         
         if (toolShortcuts[key]) {
-            ToolManager.setTool(toolShortcuts[key]);
+            const toolType = toolShortcuts[key];
+            ToolManager.setTool(toolType);
+
+            // Update the panel for the selected tool (same as button click)
+            if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
+                UIManager.updatePanelForTool(toolType);
+            }
+
+            // Activate the unified panel and ensure it's visible (same as button click)
+            const unifiedPanel = document.getElementById('unified-panel');
+            const toolsTab = document.querySelector('.tab[data-content="unified-panel"]');
+            const dropinsContainer = document.querySelector('.dropins-container');
+
+            if (unifiedPanel) {
+                unifiedPanel.classList.remove('hidden');
+                unifiedPanel.classList.add('active');
+            }
+            if (toolsTab) {
+                toolsTab.classList.add('active');
+                // Remove active class from other tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    if (tab !== toolsTab) {
+                        tab.classList.remove('active');
+                    }
+                });
+            }
+            if (dropinsContainer) {
+                dropinsContainer.classList.add('showing');
+            }
+
+            // Ensure the right panel sections are visible for drawing tools
+            if (['pencil', 'brush', 'bucket', 'dither', 'stroke', 'rect', 'circle'].includes(toolType)) {
+                const panelPreview = document.getElementById('panel-preview');
+                const panelPalette = document.getElementById('panel-palette');
+                const panelToolOptions = document.getElementById('panel-tool-options');
+
+                if (panelPreview) panelPreview.classList.remove('hidden');
+                if (panelPalette) panelPalette.classList.remove('hidden');
+                if (panelToolOptions) panelToolOptions.classList.remove('hidden');
+            }
+
             e.preventDefault();
+            // Ensure eyedropper tool is ready to use immediately
+            if (toolType === 'eyedropper') {
+                State.isDrawing = false;
+            }
             return;
         }
 
@@ -206,6 +260,16 @@ const InputHandler = {
             } else if (key === 'y') {
                 e.preventDefault();
                 this.redo();
+            } else if (key === 'c') {
+                e.preventDefault();
+                if (typeof ToolManager !== 'undefined' && ToolManager.copySelection) {
+                    ToolManager.copySelection();
+                }
+            } else if (key === 'v') {
+                e.preventDefault();
+                if (typeof ToolManager !== 'undefined' && ToolManager.pasteSelection) {
+                    ToolManager.pasteSelection();
+                }
             }
         }
     },
@@ -214,12 +278,15 @@ const InputHandler = {
      * Initialize all event listeners
      */
     init() {
-        // New Palette & Color Listeners 
+        // Section toggle functionality is now handled by right-panel-manager.js
+        // this.setupSectionToggles();
+
+        // New Palette & Color Listeners
         UI.saveColorBtn.addEventListener('click', () => {
             ColorManager.saveColorToPalette(State.color);
             this.showNotification('Color added to palette!', 'success');
         });
-        
+
         // NEW: URL Import Listener
         UI.importPaletteUrlBtn.addEventListener('click', () => {
             const url = prompt("Enter the Coolors URL (e.g., https://coolors.co/daffed-9bf3f0-473198-4a0d67-adfc92):");
@@ -228,6 +295,38 @@ const InputHandler = {
                 this.showNotification('Palette imported!', 'success');
             }
         });
+
+        // Add event listeners for palette control buttons
+        document.querySelectorAll('.palette-control-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                if (button.id === 'saveColorBtn') {
+                    ColorManager.saveColorToPalette(State.color);
+                    this.showNotification('Color added to palette!', 'success');
+                } else if (button.id === 'importPaletteUrlBtn') {
+                    const url = prompt("Enter the Coolors URL (e.g., https://coolors.co/daffed-9bf3f0-473198-4a0d67-adfc92):");
+                    if (url) {
+                        ColorManager.importPaletteFromUrl(url.trim());
+                        this.showNotification('Palette imported!', 'success');
+                    }
+                }
+            });
+        });
+
+        // Add event listeners for layer control buttons
+        document.querySelectorAll('.layer-control-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                if (button.id === 'addLayerBtn') {
+                    LayerManager.addLayer();
+                    this.showNotification('Layer added!', 'success');
+                }
+            });
+        });
+
+        // Setup brightness control functionality
+        this.setupBrightnessControls();
+
+        // Setup brightness preset buttons
+        this.setupBrightnessPresets();
 
         // Drawing events
         UI.previewLayer.addEventListener('mousedown', (e) => this.onDrawStart(e));
@@ -262,7 +361,75 @@ const InputHandler = {
         // UI Controls - only for drawing tools (exclude layer/settings buttons)
         UI.toolBtns.forEach(btn => {
             if (btn.dataset.tool) { // Only attach to buttons with data-tool attribute
-                btn.addEventListener('click', () => ToolManager.setTool(btn.dataset.tool));
+                btn.addEventListener('click', (e) => {
+                    // Don't interfere with menu parent clicks
+                    if (btn.classList.contains('menu-parent')) {
+                        return;
+                    }
+    
+                    const toolType = btn.dataset.tool;
+    
+                    if (toolType === 'lighten') {
+                        // Set lighten tool with lightening factor
+                        State.brightnessFactor = 1.2; // Default lightening factor
+                        ToolManager.setTool('lighten');
+                        InputHandler.showNotification('Lighten tool activated (1.2x brightness)', 'success');
+                    } else if (toolType === 'darken') {
+                        // Set darken tool with darkening factor
+                        State.brightnessFactor = 0.8; // Default darkening factor
+                        ToolManager.setTool('darken');
+                        InputHandler.showNotification('Darken tool activated (0.8x brightness)', 'success');
+                    } else {
+                        ToolManager.setTool(toolType);
+                        // Ensure eyedropper tool is ready to use immediately
+                        if (toolType === 'eyedropper') {
+                            State.isDrawing = false;
+                        }
+                    }
+    
+                    // Update the panel for the selected tool
+                    if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
+                        UIManager.updatePanelForTool(toolType);
+                    }
+    
+                    // Activate the unified panel and ensure it's visible
+                    const unifiedPanel = document.getElementById('unified-panel');
+                    const toolsTab = document.querySelector('.tab[data-content="unified-panel"]');
+                    const dropinsContainer = document.querySelector('.dropins-container');
+    
+                    if (unifiedPanel) {
+                        unifiedPanel.classList.remove('hidden');
+                        unifiedPanel.classList.add('active');
+                    }
+                    if (toolsTab) {
+                        toolsTab.classList.add('active');
+                        // Remove active class from other tabs
+                        document.querySelectorAll('.tab').forEach(tab => {
+                            if (tab !== toolsTab) {
+                                tab.classList.remove('active');
+                            }
+                        });
+                    }
+                    if (dropinsContainer) {
+                        dropinsContainer.classList.add('showing');
+                    }
+    
+                    // Ensure the right panel sections are visible for drawing tools
+                    if (['pencil', 'brush', 'bucket', 'dither', 'stroke', 'rect', 'circle'].includes(toolType)) {
+                        const panelPreview = document.getElementById('panel-preview');
+                        const panelPalette = document.getElementById('panel-palette');
+                        const panelToolOptions = document.getElementById('panel-tool-options');
+    
+                        if (panelPreview) panelPreview.classList.remove('hidden');
+                        if (panelPalette) panelPalette.classList.remove('hidden');
+                        if (panelToolOptions) panelToolOptions.classList.remove('hidden');
+                    }
+    
+                    // Only prevent default if we actually handled the click
+                    // Don't stop propagation to allow normal button behavior
+                    e.preventDefault();
+                    // Don't stop propagation - allow normal event flow
+                });
             }
         });
 
@@ -270,51 +437,221 @@ const InputHandler = {
         document.querySelectorAll('.tool-submenu .tool-btn').forEach(btn => {
             if (btn.dataset.action === 'tool' && btn.dataset.type) {
                 btn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent event from bubbling to parent menu
-                    ToolManager.setTool(btn.dataset.type);
-                    // Close all submenus after selection
-                    document.querySelectorAll('.tool-submenu').forEach(menu => {
-                        menu.style.display = 'none';
-                    });
+                    // Only stop propagation if we're actually clicking on a tool button
+                    // Don't interfere with menu parent clicks
+                    if (e.target === btn || e.target.closest('.tool-submenu .tool-btn') === btn) {
+                        e.stopPropagation(); // Prevent event from bubbling to parent menu
+                        const toolType = btn.dataset.type;
+    
+                        // Set the tool
+                        ToolManager.setTool(toolType);
+                        // Ensure eyedropper tool is ready to use immediately
+                        if (toolType === 'eyedropper') {
+                            State.isDrawing = false;
+                        }
+    
+                        // Update the panel for the selected tool
+                        if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
+                            UIManager.updatePanelForTool(toolType);
+                        }
+    
+                        // Activate the unified panel and ensure it's visible
+                        const unifiedPanel = document.getElementById('unified-panel');
+                        const toolsTab = document.querySelector('.tab[data-content="unified-panel"]');
+                        const dropinsContainer = document.querySelector('.dropins-container');
+    
+                        if (unifiedPanel) {
+                            unifiedPanel.classList.remove('hidden');
+                            unifiedPanel.classList.add('active');
+                        }
+                        if (toolsTab) {
+                            toolsTab.classList.add('active');
+                            // Remove active class from other tabs
+                            document.querySelectorAll('.tab').forEach(tab => {
+                                if (tab !== toolsTab) {
+                                    tab.classList.remove('active');
+                                }
+                            });
+                        }
+                        if (dropinsContainer) {
+                            dropinsContainer.classList.add('showing');
+                        }
+    
+                        // Ensure the right panel sections are visible
+                        const panelPreview = document.getElementById('panel-preview');
+                        const panelPalette = document.getElementById('panel-palette');
+                        const panelToolOptions = document.getElementById('panel-tool-options');
+    
+                        if (panelPreview) panelPreview.classList.remove('hidden');
+                        if (panelPalette) panelPalette.classList.remove('hidden');
+                        if (panelToolOptions) panelToolOptions.classList.remove('hidden');
+    
+                        // Close all submenus after selection with a slight delay
+                        setTimeout(() => {
+                            document.querySelectorAll('.tool-submenu').forEach(menu => {
+                                menu.classList.remove('visible');
+                                menu.classList.remove('persistent-submenu');
+                            });
+                            document.querySelectorAll('.tool-btn.menu-parent').forEach(parent => {
+                                parent.classList.remove('persistent-menu-active');
+                            });
+                            activeMenuParent = null;
+                        }, 100);
+                    }
                 });
             }
         });
 
-        // Handle menu parent hover behavior
+        // Track which menu parent is currently active
+        let activeMenuParent = null;
+        let lastClickedMenu = null;
+    
+        // Handle menu parent click behavior (replacing hover with click)
         document.querySelectorAll('.tool-btn.menu-parent').forEach(menuParent => {
-            menuParent.addEventListener('mouseenter', (e) => {
+            menuParent.addEventListener('click', (e) => {
                 const submenu = menuParent.querySelector('.tool-submenu');
                 if (submenu) {
-                    // Position the submenu relative to the parent button
-                    const rect = menuParent.getBoundingClientRect();
-                    submenu.style.setProperty('--submenu-top', `${rect.top + window.scrollY}px`);
-                    submenu.style.display = 'flex';
+                    // Close any other open submenus first
+                    document.querySelectorAll('.tool-submenu').forEach(otherSubmenu => {
+                        if (otherSubmenu !== submenu) {
+                            otherSubmenu.classList.remove('visible');
+                            otherSubmenu.style.display = 'none';
+                        }
+                    });
+
+                    // Remove active state from other menu parents
+                    document.querySelectorAll('.tool-btn.menu-parent').forEach(otherParent => {
+                        if (otherParent !== menuParent) {
+                            otherParent.classList.remove('persistent-menu-active');
+                            otherParent.classList.remove('active-menu');
+                        }
+                    });
+
+                    // Toggle this submenu
+                    const isCurrentlyVisible = submenu.classList.contains('visible');
+                    if (isCurrentlyVisible) {
+                        // Close the submenu
+                        submenu.classList.remove('visible');
+                        submenu.style.display = 'none';
+                        menuParent.classList.remove('persistent-menu-active');
+                        activeMenuParent = null;
+                    } else {
+                        // Open the submenu
+                        const rect = menuParent.getBoundingClientRect();
+                        submenu.style.setProperty('--submenu-top', `${rect.top + window.scrollY}px`);
+                        submenu.classList.add('visible');
+                        submenu.style.display = 'flex';
+                        submenu.style.opacity = '1';
+
+                        // Mark this as the active menu parent
+                        activeMenuParent = menuParent;
+                        menuParent.classList.add('persistent-menu-active');
+
+                        // Track this as the last clicked menu and add green dot indicator
+                        if (lastClickedMenu) {
+                            lastClickedMenu.classList.remove('active-menu');
+                        }
+                        lastClickedMenu = menuParent;
+                        menuParent.classList.add('active-menu');
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
                 }
             });
+        });
+    
+        // Handle clicks on submenu items
+        document.querySelectorAll('.tool-submenu .tool-btn').forEach(submenuItem => {
+            submenuItem.addEventListener('click', (e) => {
+                // Close all submenus when a tool is selected
+                document.querySelectorAll('.tool-submenu').forEach(submenu => {
+                    submenu.classList.remove('visible');
+                    submenu.style.display = 'none';
+                });
 
-            menuParent.addEventListener('mouseleave', (e) => {
-                // Use a small delay to allow moving to submenu
-                setTimeout(() => {
-                    const submenu = menuParent.querySelector('.tool-submenu');
-                    if (submenu && !submenu.matches(':hover')) {
-                        submenu.style.display = 'none';
-                    }
-                }, 200);
+                // Remove active state from all menu parents
+                document.querySelectorAll('.tool-btn.menu-parent').forEach(parent => {
+                    parent.classList.remove('persistent-menu-active');
+                    parent.classList.remove('active-menu');
+                });
+
+                activeMenuParent = null;
+                lastClickedMenu = null;
+
+                // Don't prevent default or stop propagation to allow normal tool selection
             });
         });
-
-        // Close submenus when clicking elsewhere
+    
+        // Close submenus when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.menu-parent') && !e.target.closest('.tool-submenu')) {
-                document.querySelectorAll('.tool-submenu').forEach(menu => {
-                    menu.style.display = 'none';
+            if (!e.target.closest('.tool-btn.menu-parent') && !e.target.closest('.tool-submenu')) {
+                document.querySelectorAll('.tool-submenu').forEach(submenu => {
+                    submenu.classList.remove('visible');
+                    submenu.style.display = 'none';
                 });
+    
+                document.querySelectorAll('.tool-btn.menu-parent').forEach(parent => {
+                    parent.classList.remove('persistent-menu-active');
+                });
+    
+                activeMenuParent = null;
             }
         });
+
+        // No global click handler - handle specific UI elements directly
+        // This approach from pixelTilemaps avoids interfering with normal page behavior
 
         UI.colorPicker.addEventListener('input', (e) => {
             State.color = e.target.value;
             UI.colorHex.textContent = e.target.value;
+            // Add the new color to history/palette
+            ColorManager.addToHistory(State.color);
+            console.log('Color picker changed to:', State.color);
+        });
+
+        // Add event listener for hex input field
+        UI.colorHex.addEventListener('input', (e) => {
+            const hexValue = e.target.value;
+            // Validate hex format
+            if (/^#([0-9A-F]{3}){1,2}$/i.test(hexValue)) {
+                State.color = hexValue;
+                UI.colorPicker.value = hexValue;
+                // Add the new color to history/palette
+                ColorManager.addToHistory(State.color);
+                console.log('Hex input changed to:', State.color);
+            } else {
+                console.log('Invalid hex color:', hexValue);
+            }
+        });
+
+        // Add blur event listener for hex input field to handle completion
+        UI.colorHex.addEventListener('blur', (e) => {
+            const hexValue = e.target.value;
+            // Try to normalize the hex value (add # if missing, expand shorthand)
+            let normalizedHex = hexValue;
+            if (normalizedHex && !normalizedHex.startsWith('#')) {
+                normalizedHex = '#' + normalizedHex;
+            }
+            // Expand shorthand hex (e.g., #abc to #aabbcc)
+            if (normalizedHex && normalizedHex.length === 4) {
+                normalizedHex = '#' + normalizedHex[1] + normalizedHex[1] +
+                               normalizedHex[2] + normalizedHex[2] +
+                               normalizedHex[3] + normalizedHex[3];
+            }
+            // Validate and apply if valid
+            if (/^#([0-9A-F]{3}){1,2}$/i.test(normalizedHex)) {
+                State.color = normalizedHex;
+                UI.colorPicker.value = normalizedHex;
+                UI.colorHex.textContent = normalizedHex;
+                // Add the new color to history/palette
+                ColorManager.addToHistory(State.color);
+                console.log('Hex input finalized to:', State.color);
+            } else if (hexValue) {
+                console.log('Invalid hex color after normalization:', hexValue);
+                // Revert to previous valid color
+                UI.colorHex.textContent = State.color;
+            }
         });
 
         UI.opacitySlider.addEventListener('input', (e) => {
@@ -352,9 +689,23 @@ const InputHandler = {
         });
 
         // Layer controls
-        UI.addLayerBtn.addEventListener('click', () => {
-            LayerManager.addLayer();
-            this.showNotification('Layer added!', 'success');
+        // Note: Event listener already added in the button setup loop above
+        // UI.addLayerBtn.addEventListener('click', () => {
+        //     LayerManager.addLayer();
+        //     this.showNotification('Layer added!', 'success');
+        // });
+
+        // Folder controls
+        document.getElementById('add-group-btn')?.addEventListener('click', () => {
+            LayerManager.addFolder('New Group');
+        });
+
+        document.getElementById('expand-all-btn')?.addEventListener('click', () => {
+            LayerManager.expandCollapseAll(true);
+        });
+
+        document.getElementById('collapse-all-btn')?.addEventListener('click', () => {
+            LayerManager.expandCollapseAll(false);
         });
 
         // Frame controls
@@ -414,12 +765,36 @@ const InputHandler = {
                 State.zoom = newZoom;
                 CanvasManager.updateZoom();
             };
-            
+
             UI.zoomInBtn.addEventListener('click', () => zoomAction(2));
             UI.zoomOutBtn.addEventListener('click', () => zoomAction(-2));
             UI.zoomResetBtn.addEventListener('click', () => {
                 State.zoom = Config.defaultZoom;
                 CanvasManager.updateZoom();
+            });
+        }
+
+        // Add specific handler for fill tool button to ensure it works
+        const fillToolBtn = document.querySelector('.tool-btn[data-tool="bucket"]');
+        if (fillToolBtn) {
+            fillToolBtn.addEventListener('click', (e) => {
+                console.log('Fill tool button clicked');
+                ToolManager.setTool('bucket');
+                State.isDrawing = false;
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
+        // Add specific handler for eyedropper tool button to ensure it works
+        const eyedropperToolBtn = document.querySelector('.tool-btn[data-tool="eyedropper"]');
+        if (eyedropperToolBtn) {
+            eyedropperToolBtn.addEventListener('click', (e) => {
+                console.log('Eyedropper tool button clicked');
+                ToolManager.setTool('eyedropper');
+                State.isDrawing = false;
+                e.preventDefault();
+                e.stopPropagation();
             });
         }
 
@@ -450,29 +825,109 @@ const InputHandler = {
             }
         });
       
-        UI.resetSettingsBtn.addEventListener('click', () => {
-            this.resetSetting();
-            this.showNotification('Settings reset to defaults!', 'info');
-        });
-        UI.exportSettingsBtn.addEventListener('click', () => {
-            this.exportSettings();
-            this.showNotification('Settings exported!', 'success');
-        });
+        // Check if the old reset button exists, otherwise use the new one
+        const resetBtn = UI.resetSettingsBtn || document.getElementById('btn-settings-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetSetting();
+                this.showNotification('Settings reset to defaults!', 'info');
+            });
+        }
 
-        // Settings checkboxes
-        UI.showGrid.addEventListener('change', (e) => this.updateSetting('showGrid', e.target.checked));
-        UI.snapToGrid.addEventListener('change', (e) => this.updateSetting('snapToGrid', e.target.checked));
-        UI.showMinimap.addEventListener('change', (e) => this.updateSetting('showMinimap', e.target.checked));
-        UI.darkMode.addEventListener('change', (e) => this.updateSetting('darkMode', e.target.checked));
-        UI.autoSave.addEventListener('change', (e) => this.updateSetting('autoSave', e.target.checked));
-        UI.showCoords.addEventListener('change', (e) => this.updateSetting('showCoords', e.target.checked));
+        // Add null check for export settings button
+        const exportBtn = UI.exportSettingsBtn || document.getElementById('exportSettingsBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportSettings();
+                this.showNotification('Settings exported!', 'success');
+            });
+        }
+        // Keyboard shortcuts button
+        const keyboardBtn = document.getElementById('keyboardBtn');
+        if (keyboardBtn) {
+            keyboardBtn.addEventListener('click', () => {
+                this.toggleKeyboardShortcutsModal();
+            });
+        }
+
+        // Keyboard shortcuts modal buttons
+        const keyboardCloseBtn = document.getElementById('btn-keyboard-close');
+        const keyboardPrintBtn = document.getElementById('btn-keyboard-print');
+
+        if (keyboardCloseBtn) {
+            keyboardCloseBtn.addEventListener('click', () => {
+                this.closeKeyboardShortcutsModal();
+            });
+        }
+
+        if (keyboardPrintBtn) {
+            keyboardPrintBtn.addEventListener('click', () => {
+                this.printKeyboardShortcuts();
+            });
+        }
+
+        // Keyboard shortcuts modal tab switching
+        const keyboardModal = document.getElementById('keyboard-shortcuts-modal');
+        if (keyboardModal) {
+            const settingsTabs = keyboardModal.querySelectorAll('.settings-tab');
+            settingsTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and content
+                    keyboardModal.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                    keyboardModal.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    const contentId = tab.getAttribute('data-content');
+                    const content = keyboardModal.querySelector(`#${contentId}`);
+                    if (content) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // Settings checkboxes - skip if SettingsManager is handling settings
+        // The new modal-based settings system handles these checkboxes
+        if (typeof SettingsManager === 'undefined') {
+            // Only set up old checkbox listeners if SettingsManager is not available
+            const settingGrid = document.getElementById('setting-grid');
+            const settingSnapToGrid = document.getElementById('setting-snap-to-grid');
+            const settingShowMinimap = document.getElementById('setting-show-minimap');
+            const settingDarkMode = document.getElementById('setting-darkmode');
+            const settingAutoSave = document.getElementById('setting-autosave');
+            const settingShowCoords = document.getElementById('setting-show-coords');
+
+            if (settingGrid) settingGrid.addEventListener('change', (e) => this.updateSetting('showGrid', e.target.checked));
+            if (settingSnapToGrid) settingSnapToGrid.addEventListener('change', (e) => this.updateSetting('snapToGrid', e.target.checked));
+            if (settingShowMinimap) settingShowMinimap.addEventListener('change', (e) => this.updateSetting('showMinimap', e.target.checked));
+            if (settingDarkMode) settingDarkMode.addEventListener('change', (e) => this.updateSetting('darkMode', e.target.checked));
+            if (settingAutoSave) settingAutoSave.addEventListener('change', (e) => this.updateSetting('autoSave', e.target.checked));
+            if (settingShowCoords) settingShowCoords.addEventListener('change', (e) => this.updateSetting('showCoords', e.target.checked));
+        } else {
+            console.log('SettingsManager is handling settings checkboxes, skipping InputHandler setup');
+        }
 
         // Browser storage save/load functionality
         if (UI.saveToBrowserBtn) {
             UI.saveToBrowserBtn.addEventListener('click', () => {
-                const state = this.getState();
                 try {
-                    localStorage.setItem('pixelAudioProject', JSON.stringify(state));
+                    const state = this.getState();
+
+                    // Convert ImageData to base64 for proper JSON serialization
+                    const stateWithSerializedLayers = {
+                        ...state,
+                        frames: state.frames.map(frame => ({
+                            ...frame,
+                            layers: frame.layers.map(layer => ({
+                                name: layer.name,
+                                visible: layer.visible,
+                                data: this.imageDataToBase64(layer.data)
+                            }))
+                        }))
+                    };
+
+                    localStorage.setItem('pixelAudioProject', JSON.stringify(stateWithSerializedLayers));
                     this.showNotification('Project saved to browser!', 'success');
                 } catch (e) {
                     console.error('Failed to save project:', e);
@@ -487,7 +942,23 @@ const InputHandler = {
                 if (saved) {
                     try {
                         const state = JSON.parse(saved);
-                        this.setState(state);
+
+                        // Convert base64 back to ImageData if needed
+                        const stateWithDeserializedLayers = {
+                            ...state,
+                            frames: state.frames.map(frame => ({
+                                ...frame,
+                                layers: frame.layers.map(layer => ({
+                                    name: layer.name,
+                                    visible: layer.visible,
+                                    data: typeof layer.data === 'string'
+                                        ? this.base64ToImageData(layer.data, State.width, State.height)
+                                        : layer.data
+                                }))
+                            }))
+                        };
+
+                        this.setState(stateWithDeserializedLayers);
                         this.showNotification('Project loaded from browser!', 'success');
                     } catch (e) {
                         console.error('Failed to load project:', e);
@@ -655,13 +1126,18 @@ const InputHandler = {
         const settings = this.getStoredSettings();
         console.log('Loading settings:', settings);
         
-        // Update UI checkboxes
-        UI.showGrid.checked = settings.showGrid;
-        UI.snapToGrid.checked = settings.snapToGrid;
-        UI.showMinimap.checked = settings.showMinimap;
-        UI.darkMode.checked = settings.darkMode;
-        UI.autoSave.checked = settings.autoSave;
-        UI.showCoords.checked = settings.showCoords;
+        // Update UI checkboxes - skip if SettingsManager is handling settings
+        if (typeof SettingsManager === 'undefined') {
+            // Only update checkboxes if SettingsManager is not available
+            if (UI.showGrid) UI.showGrid.checked = settings.showGrid;
+            if (UI.snapToGrid) UI.snapToGrid.checked = settings.snapToGrid;
+            if (UI.showMinimap) UI.showMinimap.checked = settings.showMinimap;
+            if (UI.darkMode) UI.darkMode.checked = settings.darkMode;
+            if (UI.autoSave) UI.autoSave.checked = settings.autoSave;
+            if (UI.showCoords) UI.showCoords.checked = settings.showCoords;
+        } else {
+            console.log('SettingsManager is handling settings UI updates, skipping InputHandler updates');
+        }
         
         console.log('Settings loaded, checkbox states updated. showMinimap checkbox is now:', UI.showMinimap.checked);
         
@@ -886,8 +1362,189 @@ const InputHandler = {
         document.querySelectorAll('.preset-brush-size').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.size) === currentSize);
         });
-    }
-};
+    },
 
+    /**
+     * Setup section toggle functionality for right panel sections
+     * Note: This is now handled by right-panel-manager.js to avoid conflicts
+     */
+    setupSectionToggles() {
+        // Section toggles are now handled by right-panel-manager.js
+        // This method is kept for compatibility but does nothing
+    },
+
+    /**
+     * Setup brightness control functionality for lighten/darken tool
+     */
+    setupBrightnessControls() {
+        // Initialize brightness factor in state if not present
+        if (State.brightnessFactor === undefined) {
+            State.brightnessFactor = 1.0;
+        }
+
+        // Set initial display value
+        const brightnessDisplay = document.getElementById('brightnessFactorDisplay');
+        if (brightnessDisplay) {
+            brightnessDisplay.textContent = State.brightnessFactor.toFixed(1);
+        }
+
+        // Brightness slider event listener
+        const brightnessSlider = document.getElementById('brightnessFactorSlider');
+        if (brightnessSlider) {
+            brightnessSlider.addEventListener('input', (e) => {
+                State.brightnessFactor = parseFloat(e.target.value);
+                if (brightnessDisplay) {
+                    brightnessDisplay.textContent = State.brightnessFactor.toFixed(1);
+                }
+            });
+        }
+    },
+
+    /**
+    * Setup brightness preset buttons
+    */
+    setupBrightnessPresets() {
+        // Add event listeners to brightness preset buttons
+        document.querySelectorAll('.brightness-preset').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const factor = parseFloat(button.getAttribute('data-factor'));
+                State.brightnessFactor = factor;
+
+                // Update slider and display
+                const brightnessSlider = document.getElementById('brightnessFactorSlider');
+                const brightnessDisplay = document.getElementById('brightnessFactorDisplay');
+
+                if (brightnessSlider) {
+                    brightnessSlider.value = factor;
+                }
+                if (brightnessDisplay) {
+                    brightnessDisplay.textContent = factor.toFixed(1);
+                }
+
+                // Update active button state
+                document.querySelectorAll('.brightness-preset').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+
+                // Show notification
+                const effectName = factor > 1 ? (factor === 1.2 ? 'Slight Lighten' : 'Lighten') :
+                               factor < 1 ? (factor === 0.8 ? 'Slight Darken' : 'Darken') : 'Normal';
+                this.showNotification(`Brightness set to ${effectName} (${factor.toFixed(1)})`, 'success');
+            });
+        });
+
+        // Set initial active preset button
+        const initialPreset = document.querySelector('.brightness-preset[data-factor="1.0"]');
+        if (initialPreset) {
+            initialPreset.classList.add('active');
+        }
+    },
+
+    /**
+     * Toggle keyboard shortcuts modal visibility
+     */
+    toggleKeyboardShortcutsModal() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            modal.classList.toggle('open');
+        }
+    },
+
+    /**
+     * Close keyboard shortcuts modal
+     */
+    closeKeyboardShortcutsModal() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            modal.classList.remove('open');
+        }
+    },
+
+    /**
+     * Print keyboard shortcuts
+     */
+    printKeyboardShortcuts() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            // Create a printable version
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Pixel Art Studio - Keyboard Shortcuts</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write(`
+                body { font-family: Arial, sans-serif; padding: 20px; background: white; color: black; }
+                h1 { color: #a855f7; border-bottom: 2px solid #a855f7; padding-bottom: 10px; }
+                h2 { color: #a855f7; margin-top: 20px; }
+                .shortcut-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 15px 0; }
+                .shortcut-item { border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+                .shortcut-key { font-family: monospace; font-size: 1.2rem; font-weight: bold; color: #a855f7; background: #f0f0f0; padding: 5px; border-radius: 3px; display: inline-block; margin-bottom: 5px; }
+                .shortcut-description { font-size: 0.9rem; }
+                @media print {
+                    .shortcut-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+                }
+            `);
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<h1><i class="fas fa-keyboard"></i> Pixel Art Studio - Keyboard Shortcuts</h1>');
+            printWindow.document.write('<p>Quick reference for all available keyboard shortcuts</p>');
+
+            // Copy content from each tab
+            const toolsContent = document.getElementById('shortcuts-tools');
+            const generalContent = document.getElementById('shortcuts-general');
+            const navigationContent = document.getElementById('shortcuts-navigation');
+
+            if (toolsContent) {
+                printWindow.document.write('<h2>Drawing Tools</h2>');
+                printWindow.document.write(toolsContent.innerHTML);
+            }
+
+            if (generalContent) {
+                printWindow.document.write('<h2>General Operations</h2>');
+                printWindow.document.write(generalContent.innerHTML);
+            }
+
+            if (navigationContent) {
+                printWindow.document.write('<h2>Navigation</h2>');
+                printWindow.document.write(navigationContent.innerHTML);
+            }
+
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+
+            // Print after a small delay
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+    },
+
+/**
+ * Convert ImageData to base64 string (copied from FileManager for consistency)
+ */
+imageDataToBase64(imageData) {
+    const canvas = document.createElement('canvas');
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    const ctx = canvas.getContext('2d');
+    ctx.putImageData(imageData, 0, 0);
+    return canvas.toDataURL();
+},
+
+/**
+ * Convert base64 string to ImageData (copied from FileManager for consistency)
+ */
+base64ToImageData(base64, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    const img = new Image();
+    img.src = base64;
+
+    // Force synchronous load (works for data URLs)
+    ctx.drawImage(img, 0, 0);
+    return ctx.getImageData(0, 0, width, height);
+}
+};
 // Make InputHandler available globally
 window.InputHandler = InputHandler;

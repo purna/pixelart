@@ -1,0 +1,1521 @@
+/* ============================================= */
+/* RIGHT PANEL - Panel-specific styles only */
+/* ============================================= */
+
+
+    .dropins-container {
+        width: var(--right-panel-width);
+        position: fixed;
+        top: var(--header-height);
+        height: calc(100vh - var(--header-height));
+        box-sizing: border-box;
+        transition: right 0.3s ease-in-out;
+        z-index: 1000;
+    }
+
+    .dropins-container * {
+        box-sizing: border-box;
+    }
+
+    .dropins-container .tabs {
+        position: absolute;
+        width: 2em;
+    }
+
+    .dropins-container .tabs .tab {
+        background-color: var(--bg-medium);
+        color: var(--text-primary);
+        padding: 10px;
+
+        margin: 10px 0 5px 0;
+        cursor: pointer;
+        -webkit-touch-callout: none;
+        /* iOS Safari */
+        -webkit-user-select: none;
+        /* Safari */
+        -moz-user-select: none;
+        /* Firefox */
+        -ms-user-select: none;
+        /* Internet Explorer/Edge */
+        user-select: none;
+        /* Non-prefixed version, currently
+             supported by Chrome and Opera */
+    }
+
+    .dropins-container .tabs .tab:hover {
+        background-color: var(--bg-light);
+    }
+
+    .dropins-container .tabs .tab .shortcut {
+        text-align: center;
+        font-size: 0.8em;
+        margin-bottom: 0.4em;
+    }
+
+    .dropins-container .tabs .tab .tab-name {
+        text-align: center;
+    }
+
+    .dropins-container .tabs .tab .tab-name span {
+        writing-mode: vertical-lr;
+        text-orientation: sideways;
+        white-space: nowrap;
+    }
+
+    .dropins-container .tabs .tab.active {
+        background-color: var(--accent-primary);
+        color: #000;
+    }
+
+    .dropins-container .contents {
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        padding: 0;
+        height: 100%;
+    }
+
+    .dropins-container .contents .content {
+        max-height: 100%;
+        overflow: auto;
+        display: none;
+    }
+
+    .dropins-container .contents .content.active {
+        display: block;
+    }
+
+    .dropins-container.right {
+        right: 0; /* Start visible */
+        transition: right 0.3s ease-in-out;
+    }
+
+    .dropins-container.right .tabs {
+        left: -2em;
+    }
+
+
+    .dropins-container.right .tabs .tab-label{
+        display: none;
+    }
+
+    
+
+    .dropins-container.right .tabs .tab {
+        border-radius: 5px 0 0 5px;
+        border-right: 2px solid var(--border-color);
+    }
+
+
+    .dropins-container.right.closed {
+        right: -var(--right-panel-width); /* Move off-screen to the right when closed */
+    }
+
+  
+
+
+
+
+
+/* ============================================= */
+/* 1. RIGHT PANEL CONTAINER */
+/* ============================================= */
+
+.right-panel {
+    width: var(--right-panel-width);
+    background: var(--bg-medium);
+    border-left: 1px solid var(--border-color);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translateX(0);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) var(--bg-dark);
+    padding: 0;
+    box-sizing: border-box;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+    max-height: none;
+    height: calc(100vh - 50px);
+}
+
+.right-panel.closed {
+    transform: translateX(100%);
+    width: 0;
+    border-left: none;
+}
+
+.right-panel .hidden {
+   display: none;
+}
+
+.right-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* ============================================= */
+/* 2. PANEL SECTIONS */
+/* ============================================= */
+
+.panel-section {
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border-color);
+    /*border-radius: 6px;*/
+    margin-bottom: 10px;
+    overflow: visible;
+    transition: opacity 0.3s ease;
+    padding: 5px;
+    border-bottom: 1px solid rgba(45, 55, 72, 0.3);
+}
+
+.panel-section:hover {
+    background: rgba(0, 255, 65, 0.01);
+    border-bottom-color: rgba(0, 255, 65, 0.2);
+}
+
+
+.panel-section.minimized {
+    opacity: 1;
+    pointer-events: auto;
+    filter: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+}
+
+.panel-section.minimized .section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0;
+    opacity: 0;
+}
+
+.panel-section.minimized .section-header {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+/* ============================================= */
+/* 3. SECTION HEADERS AND TITLES */
+/* ============================================= */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom-color: var(--text-secondary);
+}
+
+.section-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--accent-tertiary);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+.section-title span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.label-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.section-body {
+    padding: 5px 0px 10px 0px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) var(--bg-dark);
+}
+
+.section-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.section-body::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.section-body::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+.section-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* ============================================= */
+/* 4. SECTION TOGGLE BUTTONS */
+/* ============================================= */
+
+.section-toggle,
+.toggle-sect-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.section-toggle:hover,
+.toggle-sect-btn:hover {
+    color: #fff;
+}
+
+/* ============================================= */
+/* 5. TOOL OPTIONS PANEL */
+/* ============================================= */
+
+.tool-options-control-group,
+.tool-options-control {
+    margin-bottom: 10px;
+}
+
+.tool-options-label,
+.tool-option-label {
+    font-size: 11px;
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.tool-options-value,
+.tool-option-value {
+    font-size: 11px;
+    color: var(--accent-primary);
+    font-family: monospace;
+}
+
+.tool-option-slider {
+    width: 100%;
+}
+
+#panel-tool-options .section-body label {
+    font-size: 11px;
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+#panel-tool-options .section-body span {
+    font-size: 11px;
+    color: var(--accent-primary);
+    font-family: monospace;
+}
+
+#panel-tool-options .tool-options-control {
+    margin-bottom: 10px;
+}
+
+#panel-tool-options .tool-options-control label {
+    font-size: 11px;
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+#panel-tool-options .tool-options-control span {
+    font-size: 11px;
+    color: var(--accent-primary);
+    font-family: monospace;
+}
+
+/* ============================================= */
+/* 6. BRUSH SIZE CONTROLS */
+/* ============================================= */
+
+.brush-size-control {
+    margin-bottom: 10px;
+}
+
+.preset-brush-sizes {
+    display: flex;
+    gap: 3px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+
+.preset-brush-size {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    min-width: 24px;
+}
+
+#brushSizeDisplay,
+#opacityDisplay,
+#blurDisplay {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+#brushSizeSlider,
+#opacitySlider,
+#blurSlider {
+    width: 100%;
+}
+
+/* ============================================= */
+/* 7. OPACITY AND BLUR CONTROLS */
+/* ============================================= */
+
+.opacity-control {
+    margin-bottom: 10px;
+}
+
+.blur-control {
+    margin-top: 10px;
+}
+
+/* ============================================= */
+/* 8. BRIGHTNESS CONTROLS (LIGHTEN/DARKEN) */
+/* ============================================= */
+
+#panel-lighten-darken {
+    border-top: 1px solid rgba(45, 55, 72, 0.2);
+}
+
+.brightness-controls {
+    margin-bottom: 15px;
+}
+
+.brightness-label {
+    font-size: 11px;
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.brightness-slider {
+    width: 100%;
+}
+
+.brightness-range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.brightness-presets,
+.brightness-presets-container {
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--bg-medium);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.brightness-preset-label,
+.brightness-presets-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.brightness-preset-grid,
+.brightness-presets-grid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.brightness-preset {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.brightness-preset:hover {
+    background: var(--bg-medium);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 255, 65, 0.2);
+}
+
+.brightness-preset:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 255, 65, 0.2);
+}
+
+.brightness-preset.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #000;
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+#brightnessFactorDisplay {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+#brightnessFactorSlider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right,
+            rgba(255, 0, 110, 0.2),
+            rgba(0, 255, 65, 0.2),
+            rgba(0, 217, 255, 0.2));
+    border-radius: 3px;
+    outline: none;
+}
+
+#brightnessFactorSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-dark);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+#panel-lighten-darken .brightness-controls {
+    margin-bottom: 15px;
+}
+
+#panel-lighten-darken .brightness-label {
+    font-size: 11px;
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+#panel-lighten-darken .brightness-slider {
+    width: 100%;
+}
+
+#panel-lighten-darken .brightness-range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+/* ============================================= */
+/* 9. LAYER CONTROLS */
+/* ============================================= */
+
+.layer-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.layer-control-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.layer-control-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+#layers-list {
+    max-height: 400px;
+}
+
+#panel-layers .layer-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#addLayerBtn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#addLayerBtn i::before {
+    content: "\f0fe";
+    /* Use square-plus instead of plus-circle */
+}
+
+#addLayerBtn i {
+    font-size: 16px;
+}
+
+.layer-name {
+    flex: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-primary);
+    width: 100%;
+    font-size: 11px;
+    padding: 4px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.layer-name:focus {
+    background: var(--bg-dark);
+    border-color: var(--border-color);
+}
+
+.layer-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.layer-item:hover .layer-actions {
+    opacity: 1;
+}
+
+.layer-actions i {
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.layer-actions .fa-copy {
+    color: var(--accent-tertiary);
+}
+
+.layer-actions .fa-copy:hover {
+    color: var(--text-primary);
+    background: rgba(0, 217, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.layer-actions .fa-trash {
+    color: #f44336;
+}
+
+.layer-actions .fa-trash:hover {
+    color: #fff;
+    background: rgba(244, 67, 54, 0.2);
+    transform: scale(1.1);
+}
+
+/* ============================================= */
+/* 10. FILTER CONTROLS */
+/* ============================================= */
+
+.filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#filters-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#panel-filters .filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ============================================= */
+/* 11. TILEMAP CONTROLS */
+/* ============================================= */
+
+.tilemap-container {
+    width: 100%;
+}
+
+.tilemap-controls {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.tilemap-controls button {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.tilemap-info {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 11px;
+}
+
+.tilemap-info small {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 11px;
+}
+
+#panel-tilemap .tilemap-controls {
+    width: 100%;
+    margin-top: 10px;
+}
+
+#panel-tilemap .tilemap-controls button {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+#panel-tilemap .tilemap-info {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 11px;
+}
+
+#toggleSeamlessModeBtn {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+#clearTilemapBtn {
+    width: 100%;
+}
+
+/* ============================================= */
+/* 12. PALETTE CONTROLS */
+/* ============================================= */
+
+.palette-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.palette-control-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.palette-control-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+#palette-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+#panel-palette .palette-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+#colorPicker {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+.color-picker-input {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+#colorHex {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 70px;
+    padding: 4px;
+    font-family: monospace;
+}
+
+.color-hex-input {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 70px;
+    padding: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    text-align: center;
+}
+
+#saveColorBtn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#saveColorBtn i::before {
+    content: "\f0c7";
+    /* Use save icon instead of plus */
+}
+
+#saveColorBtn i {
+    font-size: 16px;
+}
+
+#importPaletteUrlBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#importPaletteUrlBtn i::before {
+    content: "\f07c";
+    /* Use folder-open instead of cloud-download */
+}
+
+#importPaletteUrlBtn i {
+    font-size: 16px;
+}
+
+/* ============================================= */
+/* 13. MIRROR CONTROLS */
+/* ============================================= */
+
+#mirror-options .mirror-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.mirror-note {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.mirror-note i {
+    font-size: 10px;
+}
+
+/* ============================================= */
+/* 14. PREVIEW CONTROLS */
+/* ============================================= */
+
+#panel-preview .preview-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+}
+
+#preview-container {
+    width: 120px;
+    height: 120px;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    margin: 0 auto;
+    position: relative;
+}
+
+#transform-container {
+    width: 100%;
+    background: transparent;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: none;
+    margin: 0;
+    position: relative;
+}
+
+#effects-container {
+    width: 100%;
+    background: transparent;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: none;
+    margin: 0;
+    position: relative;
+}
+
+/* Panel tool buttons - match toolbar style */
+#transform-container .tool-btn,
+#effects-container .tool-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+#transform-container .tool-btn::before,
+#effects-container .tool-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.1), rgba(0, 217, 255, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+}
+
+#transform-container .tool-btn:hover::before,
+#effects-container .tool-btn:hover::before {
+    opacity: 1;
+}
+
+#transform-container .tool-btn:hover,
+#effects-container .tool-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#transform-container .tool-btn.active,
+#effects-container .tool-btn.active {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+    transform: translateY(-1px);
+    animation: toolPulse 0.3s ease, subtlePulse 2s ease infinite;
+}
+
+/* Ensure sub-panel sections are properly styled */
+.sub-panel-section {
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--bg-medium);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: opacity 0.3s ease;
+}
+
+#transform-container .tool-btn.active::after,
+#effects-container .tool-btn.active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    z-index: -1;
+    opacity: 0.8;
+}
+
+#previewCanvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+#minimap-overlay {
+    position: absolute;
+    pointer-events: none;
+    border: 1px solid var(--accent-primary);
+    background: rgba(0, 255, 65, 0.2);
+    display: none;
+}
+
+/* ============================================= */
+/* 15. CANVAS SIZE SETTINGS */
+/* ============================================= */
+
+#setting-width,
+#setting-height {
+    flex: 1;
+    padding: 4px;
+    font-family: monospace;
+    text-align: center;
+}
+
+#apply-canvas-size {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#setting-export-resolution {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    width: 100%;
+    margin-top: 6px;
+}
+
+/* ============================================= */
+/* 16. EXPORT AND SAVE BUTTONS */
+/* ============================================= */
+
+#exportSettingsBtn,
+#saveToBrowserBtn,
+#loadFromBrowserBtn {
+    width: 100%;
+}
+
+#startTutorialBtn {
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+#resetTutorialBtn {
+    width: 100%;
+}
+
+#btn-settings-reset,
+#btn-settings-close,
+#btn-settings-save {
+    margin-right: 8px;
+}
+
+.modal-actions button {
+    margin-right: 8px;
+}
+
+/* ============================================= */
+/* 17. FILE INPUTS */
+/* ============================================= */
+
+#fileInput,
+#paletteFileInput {
+    display: none;
+}
+
+/* ============================================= */
+/* 18. INFO ICONS */
+/* ============================================= */
+
+.info-icon {
+    color: var(--text-secondary);
+    cursor: help;
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+.info-icon:hover {
+    opacity: 1;
+    color: var(--accent-tertiary);
+}
+
+/* ============================================= */
+/* 19. CONTROL SECTIONS */
+/* ============================================= */
+
+.control-section {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.control-section.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(0.8);
+}
+
+.control-section.minimized .section-header {
+    border-bottom: none;
+}
+
+.control-section.minimized .section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0;
+    opacity: 0;
+}
+
+/* ============================================= */
+/* 20. TIMELINE CONTROLS (PANEL-SPECIFIC) */
+/* ============================================= */
+
+.fps-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.fps-spacer {
+    width: 10px;
+}
+
+.fps-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.fps-slider {
+    width: 80px;
+}
+
+#fpsSlider {
+    width: 80px;
+}
+
+.frame-controls {
+    display: flex;
+    gap: 5px;
+}
+
+#addFrameBtn,
+#duplicateFrameBtn,
+#deleteFrameBtn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+#playBtn,
+#stopBtn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+/* ============================================= */
+/* 21. EFFECTS PANEL SHOW/HIDE FUNCTIONALITY */
+/* ============================================= */
+
+/* Hidden class for sub-panels */
+.subpanel-body.hidden,
+.sub-panel-section.hidden {
+    display: none;
+}
+
+/* Ensure smooth transitions when showing/hiding panels */
+.subpanel-body {
+    transition: opacity 0.3s ease;
+}
+
+/* ============================================= */
+  /* 22. TABBED PANEL CONTENT STYLES */
+  /* ============================================= */
+
+  /* Hide aside panels by default */
+  aside.content {
+      display: none;
+      height: 100%;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-primary) var(--bg-dark);
+  }
+
+  /* Show active aside panels */
+  aside.content.active {
+      display: block;
+  }
+
+  /* Show ALL panel-tab-content elements (they should always be visible) */
+  .panel-tab-content {
+      display: block;
+      height: 100%;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-primary) var(--bg-dark);
+  }
+
+.panel-tab-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.panel-tab-content::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.panel-tab-content::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+.panel-tab-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* ============================================= */
+/* 23. LAYER GROUPING/FOLDER STYLES */
+/* ============================================= */
+
+.folder-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 10px;
+}
+
+.folder-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.folder-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.layer-folder-item {
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.folder-header {
+    background: var(--bg-dark);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.folder-header:hover {
+    background: rgba(0, 255, 65, 0.05);
+}
+
+.folder-icon {
+    color: var(--accent-tertiary);
+    font-size: 14px;
+}
+
+.folder-name {
+    flex: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-primary);
+    font-size: 11px;
+    padding: 4px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.folder-name:focus {
+    background: var(--bg-dark);
+    border-color: var(--border-color);
+}
+
+.folder-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.folder-item:hover .folder-actions {
+    opacity: 1;
+}
+
+.folder-actions i {
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.folder-delete-btn {
+    color: #f44336;
+}
+
+.folder-delete-btn:hover {
+    color: #fff;
+    background: rgba(244, 67, 54, 0.2);
+}
+
+.folder-toggle-btn {
+    color: var(--text-secondary);
+}
+
+.folder-toggle-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.folder-contents {
+    padding: 5px 0;
+    transition: all 0.3s ease;
+}
+
+.folder-contents.hidden {
+    display: none;
+}
+
+/* Layer item within folder */
+.layer-item {
+    position: relative;
+    padding: 6px 10px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layer-item:hover {
+    background: rgba(0, 255, 65, 0.05);
+}
+
+.layer-item.active {
+    background: rgba(0, 255, 65, 0.1);
+    border: 1px solid var(--accent-primary);
+}
+
+.layer-item.dragging {
+    opacity: 0.5;
+    background: rgba(0, 255, 65, 0.15);
+}
+
+.layer-vis-btn {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.layer-vis-btn:hover {
+    color: var(--accent-primary);
+}
+
+.layer-vis-btn.hidden-layer {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.layer-vis-btn.hidden-layer::before {
+    content: "\f070";
+    /* Eye with slash icon */
+}
+
+.layer-name-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-primary);
+    font-size: 11px;
+    padding: 4px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.layer-name-input:focus {
+    background: var(--bg-dark);
+    border-color: var(--border-color);
+}
+
+.layer-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.layer-item:hover .layer-actions {
+    opacity: 1;
+}
+
+.layer-actions i {
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.layer-actions .fa-copy {
+    color: var(--accent-tertiary);
+}
+
+.layer-actions .fa-copy:hover {
+    color: var(--text-primary);
+    background: rgba(0, 217, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.layer-actions .fa-trash {
+    color: #f44336;
+}
+
+.layer-actions .fa-trash:hover {
+    color: #fff;
+    background: rgba(244, 67, 54, 0.2);
+    transform: scale(1.1);
+}
+
+/* Drag and drop visual feedback */
+.drag-over {
+    border: 2px dashed var(--accent-primary);
+    background: rgba(0, 255, 65, 0.05);
+}
+
+/* Folder selection dropdown */
+.folder-select-dropdown {
+    position: absolute;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 0;
+    min-width: 150px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+.dropdown-header {
+    padding: 0 12px 8px 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-item {
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+.new-folder-item {
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+    padding-top: 6px;
+}

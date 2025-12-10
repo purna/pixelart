@@ -1,6 +1,9 @@
-/* ************************ PIXEL ART STUDIO PRO ************************ */
-
 /* --- TUTORIAL SYSTEM STYLES --- */
+/* This file contains all styling for the interactive tutorial system in Pixel Audio Studio */
+
+/* ============================================= */
+/* 1. TUTORIAL OVERLAY - Full screen overlay */
+/* ============================================= */
 #tutorial-overlay {
     position: fixed;
     top: 0;
@@ -13,6 +16,9 @@
     pointer-events: none;
 }
 
+/* ============================================= */
+/* 2. TUTORIAL CONTAINER - Main tutorial panel */
+/* ============================================= */
 #tutorial-container {
     position: fixed;
     z-index: 10001;
@@ -28,6 +34,9 @@
     pointer-events: auto;
 }
 
+/* ============================================= */
+/* 3. TUTORIAL HEADER - Title and close button area */
+/* ============================================= */
 #tutorial-header {
     display: flex;
     justify-content: space-between;
@@ -49,18 +58,36 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
     padding: 0;
     margin: 0;
     line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
+#tutorial-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+/* ============================================= */
+/* 4. TUTORIAL CONTENT - Main content area */
+/* ============================================= */
 #tutorial-content {
     margin-bottom: 16px;
     line-height: 1.4;
     color: var(--text-secondary);
 }
 
+/* ============================================= */
+/* 5. TUTORIAL CONTROLS - Button and navigation area */
+/* ============================================= */
 #tutorial-controls {
     display: flex;
     flex-direction: column;
@@ -70,6 +97,9 @@
     border-top: 1px solid var(--border-color);
 }
 
+/* ============================================= */
+/* 6. TUTORIAL BUTTONS - Action buttons */
+/* ============================================= */
 .tutorial-btn {
     padding: 6px 12px;
     border: 1px solid var(--border-color);
@@ -99,12 +129,18 @@
     color: var(--accent-tertiary);
 }
 
+/* ============================================= */
+/* 7. TUTORIAL BUTTONS CONTAINER */
+/* ============================================= */
 #tutorial-buttons {
     display: flex;
     justify-content: center;
     gap: 8px;
 }
 
+/* ============================================= */
+/* 8. TUTORIAL PROGRESS DOTS - Step indicators */
+/* ============================================= */
 #tutorial-progress-dots {
     display: flex;
     justify-content: center;
@@ -125,30 +161,9 @@
     transform: scale(1.2);
 }
 
-#tutorial-close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 18px;
-    padding: 0;
-    margin: 0;
-    line-height: 1;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-#tutorial-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-}
-
-/* Tutorial Directional Arrows */
+/* ============================================= */
+/* 9. TUTORIAL DIRECTIONAL ARROWS - Visual indicators */
+/* ============================================= */
 .tutorial-arrow {
     position: absolute;
     width: 0;
@@ -157,8 +172,9 @@
     z-index: 10002;
 }
 
-
-/* Tutorial Directional Arrows */
+/* ============================================= */
+/* 10. ARROW POSITIONS - Directional arrow styles */
+/* ============================================= */
 
 /* If tutorial is BELOW target (position: 'bottom'), arrow should be on TOP, pointing UP. */
 .tutorial-arrow.bottom {
@@ -167,7 +183,6 @@
     transform: translateX(-50%);
     border-width: 8px 8px 0px 8px;
     border-color: var(--accent-primary) transparent transparent transparent;
-
 }
 
 /* If tutorial is ABOVE target (position: 'top'), arrow should be on BOTTOM, pointing DOWN. */
@@ -181,7 +196,6 @@
 
 /* For a tutorial placed to the LEFT of the target (position: 'left'), the arrow should be on the LEFT side of the panel, pointing LEFT. */
 .tutorial-arrow.left {
-    /* Arrow should be on the left edge */
     top: 50%;
     left: -8px;
     transform: translateY(-50%);
@@ -191,7 +205,6 @@
 
 /* For a tutorial placed to the RIGHT of the target (position: 'right'), the arrow should be on the RIGHT side of the panel, pointing RIGHT. */
 .tutorial-arrow.right {
-    /* Arrow should be on the right edge */
     top: 50%;
     right: -8px;
     transform: translateY(-50%);
@@ -199,9 +212,10 @@
     border-color: transparent transparent transparent var(--accent-primary);
 }
 
-/* Arrow Position Overrides - precise placement along sides */
+/* ============================================= */
+/* 11. ARROW POSITION OVERRIDES - Precise placement along sides */
+/* ============================================= */
 .tutorial-arrow.top-third {
-    /* Corrected for vertical positioning */
     top: 33.33% !important;
 }
 
@@ -210,12 +224,10 @@
 }
 
 .tutorial-arrow.bottom-third {
-    /* Corrected for vertical positioning */
     top: 66.66% !important;
 }
 
 .tutorial-arrow.left-third {
-    /* Corrected for horizontal positioning */
     left: 33.33% !important;
 }
 
@@ -224,6 +236,5 @@
 }
 
 .tutorial-arrow.right-third {
-    /* Corrected for horizontal positioning */
     left: 66.66% !important;
 }
