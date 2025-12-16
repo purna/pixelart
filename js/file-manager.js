@@ -19,12 +19,13 @@ const FileManager = {
             }));
 
             const project = {
-                version: '3.1',
+                version: '3.2',
                 width: State.width,
                 height: State.height,
                 frames: serializeFrames,
                 fps: State.fps,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                brushPresets: this.getBrushPresetsForExport()
             };
 
             const json = JSON.stringify(project, null, 2);
@@ -165,6 +166,11 @@ const FileManager = {
         AnimationManager.renderTimeline();
         LayerManager.renderList();
 
+        // Import brush presets if available
+        if (project.brushPresets) {
+            this.importBrushPresets(project.brushPresets);
+        }
+
         alert('Project loaded successfully!');
 
         // Show success notification
@@ -247,6 +253,55 @@ const FileManager = {
             if (typeof Notifications !== 'undefined') {
                 const notifications = new Notifications();
                 notifications.error('Failed to export spritesheet: ' + error.message);
+            }
+        }
+    },
+    /**
+     * Get brush presets for export
+     */
+    getBrushPresetsForExport() {
+        try {
+            // Check if BrushPresetsManager is available and has presets
+            if (typeof BrushPresetsManager !== 'undefined' && BrushPresetsManager.presets) {
+                return BrushPresetsManager.presets;
+            }
+            
+            // If BrushPresetsManager is not available, try to get from localStorage
+            try {
+                const savedPresets = localStorage.getItem('pixelArtBrushPresets');
+                if (savedPresets) {
+                    return JSON.parse(savedPresets);
+                }
+            } catch (error) {
+                console.error('Error loading presets from localStorage:', error);
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('Error getting brush presets for export:', error);
+            return [];
+        }
+    },
+
+    /**
+     * Import brush presets from project
+     */
+    importBrushPresets(brushPresets) {
+        if (brushPresets && Array.isArray(brushPresets) && brushPresets.length > 0) {
+            try {
+                // Check if BrushPresetsManager is available
+                if (typeof BrushPresetsManager !== 'undefined') {
+                    BrushPresetsManager.presets = brushPresets;
+                    BrushPresetsManager.savePresets();
+                    BrushPresetsManager.renderPresetsList();
+                    console.log('Brush presets imported successfully:', brushPresets.length);
+                } else {
+                    // Store in localStorage as fallback
+                    localStorage.setItem('pixelArtBrushPresets', JSON.stringify(brushPresets));
+                    console.log('Brush presets saved to localStorage:', brushPresets.length);
+                }
+            } catch (error) {
+                console.error('Error importing brush presets:', error);
             }
         }
     }

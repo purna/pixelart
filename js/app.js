@@ -33,6 +33,11 @@ function init() {
         SettingsManager.init();
     }
 
+    // Initialize brush presets manager
+    if (typeof BrushPresetsManager !== 'undefined') {
+        BrushPresetsManager.init();
+    }
+
     // Initialize UI management
     UIManager.init();
 

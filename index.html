@@ -286,23 +286,30 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                     </div>
                                 </div>
                                 <div class="section-body">
-                                    <div id="palette-container" class="palette-controls">
-                                        <button id="saveColorBtn" title="Save Color" class="palette-control-btn">
+                                    <div id="palette-buttons" class="palette-controls">
+                                            <button id="saveColorBtn" title="Save Color" class="palette-control-btn">
                                             <i class="fas fa-save"></i>
                                         </button>
                                         <button id="importPaletteUrlBtn" title="Import Palette"
                                             class="palette-control-btn">
                                             <i class="fas fa-folder-open"></i>
                                         </button>
+
+                                    </div>
+
+
+                                    <div id="palette-container" class="palette-controls">
+
+                                        
+                                        
                                     </div>
                                     <div class="palette-controls">
                                         <input type="color" id="colorPicker" value="#00ff41" class="color-picker-input">
                                         <input type="text" id="colorHex" value="#00ff41" class="color-hex-input">
                                     </div>
-                                    <div id="palette-container" class="palette-grid"></div>
+                                    <div id="palette-grid" class="palette-grid"></div>
                                 </div>
                             </div>
-
 
                             <div id="panel-tool-options" class="panel-section">
                                 <div class="section-header">
@@ -361,10 +368,53 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                             </div>
                                         </div>
                                     </div>
+
+                                </div>
+                            </div>
+
+                            <div id="panel-tool-options" class="panel-section">
+                                    <div class="section-header">
+                                        <div class="label-group">
+                                            <span>Brush Presets Options</span>
+                                        </div>
+                                        <div class="layer-controls">
+                                            <button class="section-toggle" data-target="brushpresets-container"
+                                                title="Toggle Tools Section">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                    <div class="section-body">
+
+                                    
+                                    <!-- Brush Presets Panel -->
+                                    <div id="brushpresets-container" class="brush-presets-panel">
+                                        <div class="brush-presets-header">
+                                            <div class="brush-presets-title">
+                                                <i class="fas fa-save"></i>
+                                                <span>Brush Presets</span>
+                                            </div>
+                                            <div class="brush-presets-actions">
+                                                <button id="addPresetBtn" class="preset-action-btn" title="Add New Preset">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="presetsContainer" class="presets-container">
+                                            <!-- Presets will be rendered here -->
+                                        </div>
+                                        <div id="presetsEmptyState" class="presets-empty-state">
+                                            <i class="fas fa-inbox"></i>
+                                            <div>No brush presets yet</div>
+                                            <div style="font-size: 10px; margin-top: 4px;">Click the + button to create your first preset</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                         </div>
+                    </div>
                 </aside>
 
                 <!-- EFFECTS PANEL (SLIDE OUT) -->
@@ -1707,6 +1757,28 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
 
 
+        <!-- Brush Preset Dialog -->
+        <div id="presetDialogOverlay" class="preset-dialog-overlay" style="display: none;"></div>
+        <div id="presetDialog" class="preset-dialog" style="display: none;">
+            <div class="preset-dialog-header">
+                <div class="preset-dialog-title">Create Brush Preset</div>
+                <button id="cancelPresetBtn" class="preset-dialog-close" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="preset-dialog-content">
+                <label for="presetName" style="display: block; margin-bottom: 6px; font-size: 12px; color: var(--text-secondary);">Preset Name</label>
+                <input type="text" id="presetName" class="preset-dialog-input" placeholder="e.g., Soft Brush, Hard Edge, Sketching">
+                <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px;">
+                    This preset will save your current brush settings (size, blur, opacity, color)
+                </div>
+            </div>
+            <div class="preset-dialog-actions">
+                <button id="cancelPresetBtn2" class="btn secondary" style="padding: 6px 12px;">Cancel</button>
+                <button id="savePresetBtn" class="btn primary" style="padding: 6px 12px;">Save Preset</button>
+            </div>
+        </div>
+
         <!-- Hidden Inputs -->
         <input type="file" id="fileInput" accept=".json" style="display: none;">
         <input type="file" id="paletteFileInput" accept=".ase" style="display: none;">
@@ -1720,6 +1792,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
         <!-- Add tooltip.js for enhanced tooltip support -->
         <script src="js/tooltip.js"></script>
 
+        <script src="js/brushpresets-manager.js"></script>
         <script src="js/right-panel-manager.js"></script>
         <script src="js/tool-manager.js"></script>
         <script src="js/canvas-manager.js"></script>
