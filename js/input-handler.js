@@ -361,6 +361,9 @@ const InputHandler = {
         this.setupBrightnessContrastControls();
         this.setupBrightnessPresets();
 
+        // Setup dither tool controls
+        this.setupDitherControls();
+
         // Drawing events
         UI.previewLayer.addEventListener('mousedown', (e) => this.onDrawStart(e));
         window.addEventListener('mousemove', (e) => this.onDrawMove(e));
@@ -893,6 +896,16 @@ const InputHandler = {
             });
         }
         
+        // Add event listeners for rotate radio buttons to trigger rotation on every click
+        const rotateRadioButtons = document.querySelectorAll('input[name="rotate"]');
+        rotateRadioButtons.forEach(radio => {
+            radio.addEventListener('click', (e) => {
+                console.log('Rotate radio button clicked:', e.target.value);
+                // Rotate the layer every time the button is clicked
+                ToolManager.rotateCurrentLayer(e.target.value);
+            });
+        });
+        
         /*
         // The mirror tool is now in the mirror-options panel
 
@@ -971,9 +984,14 @@ const InputHandler = {
                 option.classList.add('checked');
             }
 
-            // Add event listener for flip radio buttons
+            // Add click event listener for flip options to toggle flip behavior
             if (radio) {
-                radio.addEventListener('change', (e) => {
+                radio.addEventListener('click', (e) => {
+                    // Flip the current layer immediately when a flip option is clicked
+                    if (typeof ToolManager !== 'undefined' && ToolManager.flipCurrentLayer) {
+                        ToolManager.flipCurrentLayer(e.target.value);
+                    }
+
                     // Update visual states for flip options
                     document.querySelectorAll('.flip-axis-container .mirror-axis-option').forEach(opt => {
                         opt.classList.remove('checked');
@@ -983,13 +1001,55 @@ const InputHandler = {
                         e.target.closest('.mirror-axis-option').classList.add('checked');
                     }
 
-                    // Show notification about the selected flip axis
+                    // Show notification about the flip operation
                     const axisText = e.target.value === 'both' ? 'X and Y' : e.target.value.toUpperCase();
-                    this.showNotification(`Flip axis set to ${axisText} for next flip operation.`, 'info');
+                    this.showNotification(`Layer flipped on ${axisText} axis!`, 'success');
                 });
             }
         });
       
+        // Initialize align option states and add event listeners
+        document.querySelectorAll('.align-container .align-btn').forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                option.classList.add('checked');
+            }
+
+            // Add click event listener for align options to trigger alignment
+            if (radio) {
+                radio.addEventListener('click', (e) => {
+                    // Align the current layer immediately when an align option is clicked
+                    if (typeof ToolManager !== 'undefined' && ToolManager.alignCurrentLayer) {
+                        ToolManager.alignCurrentLayer(e.target.value);
+                    }
+
+                    // Update visual states for align options
+                    document.querySelectorAll('.align-container .align-btn').forEach(opt => {
+                        opt.classList.remove('checked');
+                    });
+
+                    if (e.target.checked) {
+                        e.target.closest('.align-btn').classList.add('checked');
+                    }
+
+                    // Show notification about the alignment operation
+                    const alignmentNames = {
+                        'top-left': 'Top Left',
+                        'top-center': 'Top Center',
+                        'top-right': 'Top Right',
+                        'left': 'Left',
+                        'center': 'Center',
+                        'right': 'Right',
+                        'bottom-left': 'Bottom Left',
+                        'bottom-center': 'Bottom Center',
+                        'bottom-right': 'Bottom Right'
+                    };
+                    const alignmentName = alignmentNames[e.target.value] || 'Center';
+                    this.showNotification(`Layer content aligned to ${alignmentName}!`, 'success');
+                });
+            }
+        });
+
         // Check if the old reset button exists, otherwise use the new one
         const resetBtn = UI.resetSettingsBtn || document.getElementById('btn-settings-reset');
         if (resetBtn) {
@@ -1669,15 +1729,221 @@ const InputHandler = {
         const applyBtn = document.getElementById('applyBrightnessContrastBtn');
         if (applyBtn) {
             applyBtn.addEventListener('click', () => {
-                this.applyBrightnessContrastToLayer();
+                console.log('Apply brightness/contrast button clicked');
+                console.log('Current brightness factor:', State.brightnessFactor);
+                console.log('Current frame index:', State.currentFrameIndex);
+                console.log('Current layer index:', State.activeLayerIndex);
+
+                // Ensure we have valid state
+                if (State.frames && State.frames[State.currentFrameIndex] &&
+                    State.frames[State.currentFrameIndex].layers &&
+                    State.frames[State.currentFrameIndex].layers[State.activeLayerIndex]) {
+
+                    this.applyBrightnessContrastToLayer();
+                } else {
+                    console.error('Invalid state for brightness/contrast application');
+                    this.showNotification('Cannot apply brightness/contrast: invalid layer selection', 'error');
+                }
             });
         }
+    },
+
+    /**
+     * Setup dither tool controls and preview
+     */
+    setupDitherControls() {
+        // Initialize dither state if not present
+        if (State.ditherDensity === undefined) {
+            State.ditherDensity = 5;
+        }
+        if (State.ditherColor1 === undefined) {
+            State.ditherColor1 = '#00ff41';
+        }
+        if (State.ditherColor2 === undefined) {
+            State.ditherColor2 = '#ffffff';
+        }
+        if (State.ditherOpacity1 === undefined) {
+            State.ditherOpacity1 = 100;
+        }
+        if (State.ditherOpacity2 === undefined) {
+            State.ditherOpacity2 = 100;
+        }
+        if (State.ditherPattern === undefined) {
+            State.ditherPattern = 'checkerboard';
+        }
+
+        // Pattern density slider
+        const densitySlider = document.getElementById('ditherDensity');
+        const densityValue = document.getElementById('ditherDensityValue');
+
+        if (densitySlider && densityValue) {
+            densitySlider.value = State.ditherDensity;
+            densityValue.textContent = State.ditherDensity;
+
+            densitySlider.addEventListener('input', (e) => {
+                State.ditherDensity = parseInt(e.target.value);
+                densityValue.textContent = State.ditherDensity;
+                this.updateDitherPreview();
+            });
+        }
+
+        // Color pickers
+        const colorPicker1 = document.getElementById('ditherColor1');
+        const colorPicker2 = document.getElementById('ditherColor2');
+
+        if (colorPicker1) {
+            colorPicker1.value = State.ditherColor1;
+            colorPicker1.addEventListener('input', (e) => {
+                State.ditherColor1 = e.target.value;
+                this.updateDitherPreview();
+            });
+        }
+
+        if (colorPicker2) {
+            colorPicker2.value = State.ditherColor2;
+            colorPicker2.addEventListener('input', (e) => {
+                State.ditherColor2 = e.target.value;
+                this.updateDitherPreview();
+            });
+        }
+
+        // Opacity sliders
+        const opacitySlider1 = document.getElementById('ditherOpacity1');
+        const opacityValue1 = document.getElementById('ditherOpacityValue1');
+        const opacitySlider2 = document.getElementById('ditherOpacity2');
+        const opacityValue2 = document.getElementById('ditherOpacityValue2');
+
+        if (opacitySlider1 && opacityValue1) {
+            opacitySlider1.value = State.ditherOpacity1;
+            opacityValue1.textContent = State.ditherOpacity1 + '%';
+
+            opacitySlider1.addEventListener('input', (e) => {
+                State.ditherOpacity1 = parseInt(e.target.value);
+                opacityValue1.textContent = State.ditherOpacity1 + '%';
+                this.updateDitherPreview();
+            });
+        }
+
+        if (opacitySlider2 && opacityValue2) {
+            opacitySlider2.value = State.ditherOpacity2;
+            opacityValue2.textContent = State.ditherOpacity2 + '%';
+
+            opacitySlider2.addEventListener('input', (e) => {
+                State.ditherOpacity2 = parseInt(e.target.value);
+                opacityValue2.textContent = State.ditherOpacity2 + '%';
+                this.updateDitherPreview();
+            });
+        }
+
+        // Pattern style selector
+        const patternSelector = document.getElementById('ditherPattern');
+        const patternDisplay = document.getElementById('ditherPatternDisplay');
+
+        if (patternSelector) {
+            patternSelector.value = State.ditherPattern;
+            
+            patternSelector.addEventListener('change', (e) => {
+                State.ditherPattern = e.target.value;
+                if (patternDisplay) {
+                    // Get the display text from the selected option
+                    const selectedOption = patternSelector.options[patternSelector.selectedIndex];
+                    patternDisplay.textContent = selectedOption.textContent;
+                }
+                this.updateDitherPreview();
+            });
+        }
+
+        // Initialize dither preview
+        this.updateDitherPreview();
+    },
+
+    /**
+     * Update the dither pattern preview
+     */
+    updateDitherPreview() {
+        const previewCanvas = document.getElementById('ditherPreviewCanvas');
+        if (!previewCanvas) return;
+
+        const ctx = previewCanvas.getContext('2d');
+        const size = 64;
+        const density = State.ditherDensity || 5;
+        const pattern = State.ditherPattern || 'checkerboard';
+
+        // Clear canvas
+        ctx.clearRect(0, 0, size, size);
+
+        // Parse colors with opacity
+        const color1 = this.parseColorWithOpacity(State.ditherColor1, State.ditherOpacity1);
+        const color2 = this.parseColorWithOpacity(State.ditherColor2, State.ditherOpacity2);
+
+        // Draw dither pattern based on the selected pattern type
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                let useColor1 = false;
+                
+                switch (pattern) {
+                    case 'checkerboard':
+                        // Proper checkerboard: alternating pixels in a 2x2 grid, scaled by density
+                        const checkerSize = Math.max(2, 11 - density);
+                        useColor1 = Math.floor(x / (checkerSize / 2)) % 2 === Math.floor(y / (checkerSize / 2)) % 2;
+                        break;
+                    case 'diagonal':
+                        useColor1 = (x + y) % (11 - density) === 0;
+                        break;
+                    case 'horizontal':
+                        useColor1 = y % (11 - density) === 0;
+                        break;
+                    case 'vertical':
+                        useColor1 = x % (11 - density) === 0;
+                        break;
+                    case 'random':
+                        useColor1 = Math.random() < 0.5;
+                        break;
+                    default:
+                        useColor1 = (x + y) % (11 - density) === 0;
+                }
+                
+                ctx.fillStyle = useColor1 ? color1 : color2;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+    },
+
+    /**
+     * Parse color with opacity
+     */
+    parseColorWithOpacity(hexColor, opacity) {
+        // Remove # if present
+        const hex = hexColor.replace('#', '');
+
+        // Parse RGB components
+        let r, g, b;
+        if (hex.length === 3) {
+            // Shorthand hex (e.g., #abc)
+            r = parseInt(hex[0] + hex[0], 16);
+            g = parseInt(hex[1] + hex[1], 16);
+            b = parseInt(hex[2] + hex[2], 16);
+        } else if (hex.length === 6) {
+            // Full hex (e.g., #aabbcc)
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        } else {
+            // Default to white if invalid
+            return 'rgba(255, 255, 255, 1)';
+        }
+
+        // Apply opacity
+        const alpha = opacity / 100;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     },
 
     /**
      * Apply brightness/contrast adjustment to the selected layer
      */
     applyBrightnessContrastToLayer() {
+        console.log('applyBrightnessContrastToLayer called');
+
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
         const imageData = layer.data;
@@ -1685,6 +1951,11 @@ const InputHandler = {
         const height = State.height;
         const data = imageData.data;
         const factor = State.brightnessFactor;
+
+        console.log('Applying brightness/contrast to layer:', layer.name);
+        console.log('Layer dimensions:', width, 'x', height);
+        console.log('Brightness factor:', factor);
+        console.log('Original image data length:', data.length);
 
         // Create a new ImageData for the adjusted result
         const adjustedData = new ImageData(width, height);
@@ -1701,15 +1972,24 @@ const InputHandler = {
                 continue;
             }
 
-            // Apply brightness/contrast adjustment
-            adjustedDataArray[i] = Math.min(255, Math.max(0, data[i] * factor));     // R
-            adjustedDataArray[i + 1] = Math.min(255, Math.max(0, data[i + 1] * factor)); // G
-            adjustedDataArray[i + 2] = Math.min(255, Math.max(0, data[i + 2] * factor)); // B
+            // Improved brightness/contrast algorithm that handles black pixels better
+            if (factor > 1) {
+                // Lightening - use a more sophisticated approach for dark colors
+                adjustedDataArray[i] = Math.min(255, data[i] + (255 - data[i]) * (factor - 1) * 0.5);     // R
+                adjustedDataArray[i + 1] = Math.min(255, data[i + 1] + (255 - data[i + 1]) * (factor - 1) * 0.5); // G
+                adjustedDataArray[i + 2] = Math.min(255, data[i + 2] + (255 - data[i + 2]) * (factor - 1) * 0.5); // B
+            } else {
+                // Darkening - use simple multiplication
+                adjustedDataArray[i] = Math.min(255, Math.max(0, data[i] * factor));     // R
+                adjustedDataArray[i + 1] = Math.min(255, Math.max(0, data[i + 1] * factor)); // G
+                adjustedDataArray[i + 2] = Math.min(255, Math.max(0, data[i + 2] * factor)); // B
+            }
             adjustedDataArray[i + 3] = data[i + 3]; // A (keep original alpha)
         }
 
         // Update layer data
         layer.data = adjustedData;
+        console.log('Updated layer data with adjusted image data');
 
         // Update canvas and save history
         CanvasManager.render();

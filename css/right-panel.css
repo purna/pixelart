@@ -1818,3 +1818,210 @@
                 grid-template-columns: 1fr;
             }
         }
+
+       /* ============================================= */
+       /* 24. ICON STACK STYLES */
+       /* ============================================= */
+
+       .icon-stack {
+           position: relative;
+           display: inline-block;
+           width: 48px;
+           height: 48px;
+       }
+       .base-icon {
+           position: absolute;
+           color: var(--text-secondary);
+           z-index: 1;
+           bottom: 2px;
+           right: 2px;
+           font-size: 14px !important;
+       }
+       .overlay-icon {
+           position: absolute;
+           color: var(--accent-primary);
+           z-index: 2;
+           top: 50%;
+           left: 50%;
+           transform: translate(-50%, -50%);
+           font-size: 20px !important;
+       }
+       .tool-btn .icon-stack {
+           display: flex;
+           align-items: center;
+           justify-content: center;
+       }
+       /* Use Font Awesome 2xl size for move container buttons */
+       #move-options .tool-btn .base-icon {
+           font-size: 24px;
+       }
+       #move-options .tool-btn .overlay-icon {
+           font-size: 16px;
+       }
+       /* Arrange move container buttons horizontally */
+       #move-options .move-container {
+           display: flex;
+           flex-direction: row;
+           gap: 12px;
+           justify-content: center;
+           margin-top: 15px;
+       }
+       #move-options .tool-btn {
+           flex: 0 0 auto;
+       }
+
+       /* ============================================= */
+       /* 25. DITHER CONTROLS STYLING */
+       /* ============================================= */
+
+       #ditherPreviewCanvas{
+        position: relative;
+       }
+
+       .dither-controls {
+           margin-top: 15px;
+           padding: 10px;
+           background: var(--bg-medium);
+           border-radius: 6px;
+           border: 1px solid var(--border-color);
+       }
+
+       .dither-color-row {
+           display: flex;
+           gap: 15px;
+           margin-bottom: 15px;
+       }
+
+       .dither-color-control {
+           flex: 1;
+       }
+
+       .dither-label {
+           font-size: 11px;
+           color: var(--text-secondary);
+           display: block;
+           margin-bottom: 6px;
+           font-weight: 600;
+           text-transform: uppercase;
+           letter-spacing: 0.5px;
+       }
+
+       .color-opacity-container {
+           display: flex;
+           flex-direction: column;
+           gap: 8px;
+       }
+
+       .dither-color-picker {
+           width: 100%;
+           height: 32px;
+           padding: 4px;
+           border: 1px solid var(--border-color);
+           border-radius: 4px;
+           background: var(--bg-dark);
+           cursor: pointer;
+       }
+
+       .opacity-slider-container {
+           display: flex;
+           align-items: center;
+           gap: 8px;
+       }
+
+       .dither-opacity-slider {
+           flex: 1;
+           height: 6px;
+           border-radius: 3px;
+           outline: none;
+           -webkit-appearance: none;
+           background: linear-gradient(to right, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+       }
+
+       .dither-opacity-slider::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           width: 14px;
+           height: 14px;
+           background: var(--accent-primary);
+           border-radius: 50%;
+           cursor: pointer;
+           border: 2px solid var(--bg-dark);
+       }
+
+       .dither-pattern-controls {
+           margin-bottom: 15px;
+       }
+
+       .pattern-style-container {
+           display: flex;
+           gap: 8px;
+           align-items: center;
+       }
+
+       .dither-pattern-select {
+           flex: 1;
+           padding: 6px 10px;
+           background: var(--bg-dark);
+           border: 1px solid var(--border-color);
+           border-radius: 4px;
+           color: var(--text-primary);
+           font-size: 11px;
+           cursor: pointer;
+       }
+
+       .density-slider-container {
+           display: flex;
+           align-items: center;
+           gap: 8px;
+       }
+
+       .dither-density-slider {
+           flex: 1;
+           height: 6px;
+           border-radius: 3px;
+           outline: none;
+           -webkit-appearance: none;
+           background: linear-gradient(to right, rgba(255, 0, 110, 0.2), rgba(0, 217, 255, 0.2));
+       }
+
+       .dither-density-slider::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           width: 14px;
+           height: 14px;
+           background: var(--accent-tertiary);
+           border-radius: 50%;
+           cursor: pointer;
+           border: 2px solid var(--bg-dark);
+       }
+
+       .dither-preview-container {
+           margin-bottom: 15px;
+       }
+
+       .dither-preview {
+           width: 64px;
+           height: 64px;
+           border: 1px solid var(--border-color);
+           border-radius: 4px;
+           overflow: hidden;
+           background: var(--bg-dark);
+       }
+
+       .dither-preview canvas {
+           width: 64px;
+           height: 64px;
+           image-rendering: pixelated;
+       }
+
+       .dither-apply-btn {
+           width: 100%;
+           margin-top: 10px;
+           background: var(--accent-primary);
+           color: #000;
+           font-weight: 600;
+           transition: all 0.2s ease;
+       }
+
+       .dither-apply-btn:hover {
+           background: var(--accent-secondary);
+           transform: translateY(-1px);
+       }

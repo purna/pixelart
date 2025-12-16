@@ -15,6 +15,13 @@ var State = {
     brushBlur: 0,
     isDrawing: false,
     mirrorAxis: 'none', // 'none', 'x', 'y', or 'both'
+
+    // Dither tool settings
+    ditherDensity: 5,
+    ditherColor1: '#00ff41',
+    ditherColor2: '#ffffff',
+    ditherOpacity1: 100,
+    ditherOpacity2: 100,
     
     // Frame structure: { layers: [ { name: string, visible: bool, data: ImageData }, ... ] }
     frames: [],

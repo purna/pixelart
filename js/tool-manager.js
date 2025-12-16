@@ -19,9 +19,37 @@ const ToolManager = {
     plot(x, y, colorStr, context, isEraser = false, isWrapperCall = false) { // ADDED isWrapperCall
         const size = State.brushSize;
 
-        // Dither pattern check
+        // Dither pattern check with customizable density and colors
         if (State.tool === 'dither') {
-            if ((Math.floor(x) + Math.floor(y)) % 2 !== 0) return;
+            const density = State.ditherDensity || 5;
+            const patternSize = 11 - density; // Convert density 1-10 to pattern size 10-1
+            const pattern = State.ditherPattern || 'checkerboard';
+
+            // Use the dither pattern based on the selected pattern type
+            let shouldDraw = false;
+            switch (pattern) {
+                case 'checkerboard':
+                    // Proper checkerboard: alternating pixels in a 2x2 grid, scaled by density
+                    const checkerSize = Math.max(2, 11 - density);
+                    shouldDraw = Math.floor(x / (checkerSize / 2)) % 2 === Math.floor(y / (checkerSize / 2)) % 2;
+                    break;
+                case 'diagonal':
+                    shouldDraw = (Math.floor(x) + Math.floor(y)) % patternSize === 0;
+                    break;
+                case 'horizontal':
+                    shouldDraw = Math.floor(y) % patternSize === 0;
+                    break;
+                case 'vertical':
+                    shouldDraw = Math.floor(x) % patternSize === 0;
+                    break;
+                case 'random':
+                    shouldDraw = Math.random() < 0.5;
+                    break;
+                default:
+                    shouldDraw = (Math.floor(x) + Math.floor(y)) % patternSize === 0;
+            }
+
+            if (!shouldDraw) return;
         }
 
         if (isEraser) {
@@ -50,40 +78,138 @@ const ToolManager = {
                 context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
             }
         } else {
-            // Normal drawing tools
-            context.fillStyle = colorStr;
-            context.globalCompositeOperation = 'source-over';
-
-            if (State.tool === 'brush') {
-                // Brush tool - use circular brush with blur for soft edges
+            if (State.tool === 'dither') {
+                // Dither tool with brush size and blur support
                 const centerX = Math.floor(x);
                 const centerY = Math.floor(y);
                 const radius = Math.floor(size / 2);
 
-                // Create radial gradient for soft brush effect
-                const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
-                gradient.addColorStop(0, colorStr);
-   
-                // Extract RGB values from colorStr and create transparent version
-                const rgbaMatch = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-                if (rgbaMatch) {
-                    const r = parseInt(rgbaMatch[1]);
-                    const g = parseInt(rgbaMatch[2]);
-                    const b = parseInt(rgbaMatch[3]);
-                    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                } else {
-                    // Fallback to transparent black if color parsing fails
-                    gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                }
+                // Use dither colors with opacity
+                const color1 = State.ditherColor1 || '#00ff41';
+                const color2 = State.ditherColor2 || '#ffffff';
+                const opacity1 = (State.ditherOpacity1 || 100) / 100;
+                const opacity2 = (State.ditherOpacity2 || 100) / 100;
+                const pattern = State.ditherPattern || 'checkerboard';
 
-                context.fillStyle = gradient;
-                context.beginPath();
-                context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
-                context.fill();
+                if (State.brushBlur > 0) {
+                    // Apply blur effect for soft dither edges
+                    const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
+                    
+                    // Determine colors for gradient based on dither pattern at each point
+                    const colorAtPoint = (px, py) => {
+                        let useColor1 = false;
+                        const patternSize = 11 - (State.ditherDensity || 5);
+                        
+                        switch (pattern) {
+                            case 'checkerboard':
+                                const checkerSize = Math.max(2, 11 - (State.ditherDensity || 5));
+                                useColor1 = Math.floor(px / (checkerSize / 2)) % 2 === Math.floor(py / (checkerSize / 2)) % 2;
+                                break;
+                            case 'diagonal':
+                                useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
+                                break;
+                            case 'horizontal':
+                                useColor1 = Math.floor(py) % patternSize === 0;
+                                break;
+                            case 'vertical':
+                                useColor1 = Math.floor(px) % patternSize === 0;
+                                break;
+                            case 'random':
+                                useColor1 = Math.random() < 0.5;
+                                break;
+                            default:
+                                useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
+                        }
+                        
+                        const color = useColor1 ? color1 : color2;
+                        const opacity = useColor1 ? opacity1 : opacity2;
+                        return this.hexToRgba(color, opacity);
+                    };
+                    
+                    // Create gradient with dither colors
+                    const centerColor = colorAtPoint(centerX, centerY);
+                    gradient.addColorStop(0, centerColor);
+                    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                    
+                    context.fillStyle = gradient;
+                    context.beginPath();
+                    context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
+                    context.fill();
+                } else {
+                    // Standard dither tool without blur - use square brush area
+                    const offset = Math.floor(size / 2);
+                    for (let dy = -offset; dy < size - offset; dy++) {
+                        for (let dx = -offset; dx < size - offset; dx++) {
+                            const px = centerX + dx;
+                            const py = centerY + dy;
+                            
+                            let useColor1 = false;
+                            const patternSize = 11 - (State.ditherDensity || 5);
+                            
+                            switch (pattern) {
+                                case 'checkerboard':
+                                    const checkerSize = Math.max(2, 11 - (State.ditherDensity || 5));
+                                    useColor1 = Math.floor(px / (checkerSize / 2)) % 2 === Math.floor(py / (checkerSize / 2)) % 2;
+                                    break;
+                                case 'diagonal':
+                                    useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
+                                    break;
+                                case 'horizontal':
+                                    useColor1 = Math.floor(py) % patternSize === 0;
+                                    break;
+                                case 'vertical':
+                                    useColor1 = Math.floor(px) % patternSize === 0;
+                                    break;
+                                case 'random':
+                                    useColor1 = Math.random() < 0.5;
+                                    break;
+                                default:
+                                    useColor1 = (Math.floor(px) + Math.floor(py)) % (patternSize * 2) < patternSize;
+                            }
+                            
+                            const color = useColor1 ? color1 : color2;
+                            const opacity = useColor1 ? opacity1 : opacity2;
+                            context.fillStyle = this.hexToRgba(color, opacity);
+                            context.fillRect(px, py, 1, 1);
+                        }
+                    }
+                }
             } else {
-                // Pencil and other tools - use standard square drawing
-                const offset = Math.floor(size / 2);
-                context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
+                // Non-dither tools
+                context.fillStyle = colorStr;
+                context.globalCompositeOperation = 'source-over';
+
+                if (State.tool === 'brush') {
+                    // Brush tool - use circular brush with blur for soft edges
+                    const centerX = Math.floor(x);
+                    const centerY = Math.floor(y);
+                    const radius = Math.floor(size / 2);
+
+                    // Create radial gradient for soft brush effect
+                    const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius + State.brushBlur);
+                    gradient.addColorStop(0, colorStr);
+       
+                    // Extract RGB values from colorStr and create transparent version
+                    const rgbaMatch = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                    if (rgbaMatch) {
+                        const r = parseInt(rgbaMatch[1]);
+                        const g = parseInt(rgbaMatch[2]);
+                        const b = parseInt(rgbaMatch[3]);
+                        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                    } else {
+                        // Fallback to transparent black if color parsing fails
+                        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                    }
+
+                    context.fillStyle = gradient;
+                    context.beginPath();
+                    context.arc(centerX, centerY, radius + State.brushBlur, 0, 2 * Math.PI);
+                    context.fill();
+                } else {
+                    // Pencil and other tools - use standard square drawing
+                    const offset = Math.floor(size / 2);
+                    context.fillRect(Math.floor(x) - offset, Math.floor(y) - offset, size, size);
+                }
             }
         }
     },
@@ -634,9 +760,9 @@ const ToolManager = {
     },
 
     /**
-     * Rotate current layer 90 degrees clockwise
+     * Rotate current layer 90 degrees clockwise or counter-clockwise
      */
-    rotateCurrentLayer() {
+    rotateCurrentLayer(direction = 'clockwise') {
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
         const imageData = layer.data;
@@ -646,11 +772,23 @@ const ToolManager = {
         // Create a new ImageData for the rotated result
         const rotatedData = new ImageData(height, width);
 
-        // Rotate 90 degrees clockwise
+        // Rotate based on direction
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const originalIndex = (y * width + x) * 4;
-                const rotatedIndex = ((width - 1 - x) * height + y) * 4;
+                let rotatedIndex;
+
+                if (direction === 'clockwise') {
+                    // Clockwise rotation: (x, y) -> (height - 1 - y, x)
+                    const newX = height - 1 - y;
+                    const newY = x;
+                    rotatedIndex = (newY * height + newX) * 4;
+                } else {
+                    // Counter-clockwise rotation: (x, y) -> (y, width - 1 - x)
+                    const newX = y;
+                    const newY = width - 1 - x;
+                    rotatedIndex = (newY * height + newX) * 4;
+                }
 
                 // Copy pixel data
                 rotatedData.data[rotatedIndex] = imageData.data[originalIndex];
@@ -669,7 +807,8 @@ const ToolManager = {
             InputHandler.saveState();
         }
 
-        InputHandler.showNotification('Layer rotated 90° clockwise!', 'success');
+        const directionText = direction === 'counter-clockwise' ? 'counter-clockwise' : 'clockwise';
+        InputHandler.showNotification(`Layer rotated 90° ${directionText}!`, 'success');
     },
 
     /**
@@ -734,6 +873,14 @@ const ToolManager = {
      * Align current layer content to center of canvas
      */
     alignCurrentLayerToCenter() {
+        this.alignCurrentLayer('center');
+    },
+
+    /**
+     * Align current layer content based on alignment option
+     * @param {string} alignment - Alignment option (top-left, top-center, top-right, left, center, right, bottom-left, bottom-center, bottom-right)
+     */
+    alignCurrentLayer(alignment = 'center') {
         const currentFrame = State.frames[State.currentFrameIndex];
         const layer = currentFrame.layers[State.activeLayerIndex];
         const imageData = layer.data;
@@ -759,33 +906,76 @@ const ToolManager = {
         }
 
         if (!hasContent) {
-            InputHandler.showNotification('Layer is empty, nothing to center!', 'info');
+            InputHandler.showNotification('Layer is empty, nothing to align!', 'info');
             return;
         }
 
-        // Calculate current content dimensions and position
+        // Calculate current content dimensions
         const contentWidth = maxX - minX + 1;
         const contentHeight = maxY - minY + 1;
-        const centerX = Math.floor((width - contentWidth) / 2);
-        const centerY = Math.floor((height - contentHeight) / 2);
 
-        // Calculate translation needed
-        const translateX = centerX - minX;
-        const translateY = centerY - minY;
+        // Calculate target position based on alignment
+        let targetX, targetY;
 
-        // Create a new ImageData for the centered result
-        const centeredData = new ImageData(width, height);
-        const centeredDataArray = centeredData.data;
-
-        // Clear the new image data (make it transparent)
-        for (let i = 0; i < centeredDataArray.length; i += 4) {
-            centeredDataArray[i] = 0;
-            centeredDataArray[i + 1] = 0;
-            centeredDataArray[i + 2] = 0;
-            centeredDataArray[i + 3] = 0;
+        switch (alignment) {
+            case 'top-left':
+                targetX = 0;
+                targetY = 0;
+                break;
+            case 'top-center':
+                targetX = Math.floor((width - contentWidth) / 2);
+                targetY = 0;
+                break;
+            case 'top-right':
+                targetX = width - contentWidth;
+                targetY = 0;
+                break;
+            case 'left':
+                targetX = 0;
+                targetY = Math.floor((height - contentHeight) / 2);
+                break;
+            case 'center':
+                targetX = Math.floor((width - contentWidth) / 2);
+                targetY = Math.floor((height - contentHeight) / 2);
+                break;
+            case 'right':
+                targetX = width - contentWidth;
+                targetY = Math.floor((height - contentHeight) / 2);
+                break;
+            case 'bottom-left':
+                targetX = 0;
+                targetY = height - contentHeight;
+                break;
+            case 'bottom-center':
+                targetX = Math.floor((width - contentWidth) / 2);
+                targetY = height - contentHeight;
+                break;
+            case 'bottom-right':
+                targetX = width - contentWidth;
+                targetY = height - contentHeight;
+                break;
+            default:
+                targetX = Math.floor((width - contentWidth) / 2);
+                targetY = Math.floor((height - contentHeight) / 2);
         }
 
-        // Copy pixels to centered position
+        // Calculate translation needed
+        const translateX = targetX - minX;
+        const translateY = targetY - minY;
+
+        // Create a new ImageData for the aligned result
+        const alignedData = new ImageData(width, height);
+        const alignedDataArray = alignedData.data;
+
+        // Clear the new image data (make it transparent)
+        for (let i = 0; i < alignedDataArray.length; i += 4) {
+            alignedDataArray[i] = 0;
+            alignedDataArray[i + 1] = 0;
+            alignedDataArray[i + 2] = 0;
+            alignedDataArray[i + 3] = 0;
+        }
+
+        // Copy pixels to aligned position
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const originalIndex = (y * width + x) * 4;
@@ -795,17 +985,17 @@ const ToolManager = {
 
                     if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
                         const newIndex = (newY * width + newX) * 4;
-                        centeredDataArray[newIndex] = data[originalIndex];
-                        centeredDataArray[newIndex + 1] = data[originalIndex + 1];
-                        centeredDataArray[newIndex + 2] = data[originalIndex + 2];
-                        centeredDataArray[newIndex + 3] = data[originalIndex + 3];
+                        alignedDataArray[newIndex] = data[originalIndex];
+                        alignedDataArray[newIndex + 1] = data[originalIndex + 1];
+                        alignedDataArray[newIndex + 2] = data[originalIndex + 2];
+                        alignedDataArray[newIndex + 3] = data[originalIndex + 3];
                     }
                 }
             }
         }
 
         // Update layer data
-        layer.data = centeredData;
+        layer.data = alignedData;
 
         // Update canvas and save history
         CanvasManager.render();
@@ -813,7 +1003,20 @@ const ToolManager = {
             InputHandler.saveState();
         }
 
-        InputHandler.showNotification('Layer content centered!', 'success');
+        // Show appropriate notification based on alignment
+        const alignmentNames = {
+            'top-left': 'Top Left',
+            'top-center': 'Top Center',
+            'top-right': 'Top Right',
+            'left': 'Left',
+            'center': 'Center',
+            'right': 'Right',
+            'bottom-left': 'Bottom Left',
+            'bottom-center': 'Bottom Center',
+            'bottom-right': 'Bottom Right'
+        };
+        const alignmentName = alignmentNames[alignment] || 'Center';
+        InputHandler.showNotification(`Layer content aligned to ${alignmentName}!`, 'success');
     },
 
     /**
