@@ -405,14 +405,14 @@
     margin-bottom: 10px;
 }
 
-.preset-brush-sizes {
+.preset-brush-sizes, .preset-ditherbrush-sizes {
     display: flex;
     gap: 3px;
     margin-top: 5px;
     flex-wrap: wrap;
 }
 
-.preset-brush-size {
+.preset-brush-size, .preset-ditherbrush-size {
     background: var(--bg-light);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -423,14 +423,14 @@
     min-width: 24px;
 }
 
-#brushSizeDisplay,
+#brushSizeDisplay, #ditherbrushSizeDisplay,
 #opacityDisplay,
 #blurDisplay {
     font-size: 11px;
     color: var(--text-secondary);
 }
 
-#brushSizeSlider,
+#brushSizeSlider, #ditherbrushSizeSlider,
 #opacitySlider,
 #blurSlider {
     width: 100%;
@@ -1064,9 +1064,14 @@
     border-color: rgba(0, 217, 255, 0.3);
 }
 
-.mirror-note i {
-    font-size: 10px;
+.mirror-note  {
+    font-size: 12px;
 }
+
+.mirror-note small{
+    color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;
+}
+
 
 /* ============================================= */
 /* 14. PREVIEW CONTROLS */
@@ -1876,6 +1881,47 @@
 
        #ditherPreviewCanvas{
         position: relative;
+       }
+
+       .dither-mode-controls {
+           margin-top: 15px;
+           padding: 10px;
+           background: var(--bg-medium);
+           border-radius: 6px;
+           border: 1px solid var(--border-color);
+       }
+
+       .dither-mode-buttons {
+           display: flex;
+           gap: 8px;
+       }
+
+       .dither-mode-btn {
+           flex: 1;
+           padding: 8px 12px;
+           border: 1px solid var(--border-color);
+           border-radius: 4px;
+           background: var(--bg-dark);
+           color: var(--text-primary);
+           font-size: 12px;
+           cursor: pointer;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           gap: 6px;
+           transition: all 0.2s ease;
+       }
+
+       .dither-mode-btn:hover {
+           background: var(--bg-hover);
+           border-color: var(--accent-primary);
+       }
+
+       .dither-mode-btn.active {
+           background: var(--accent-primary);
+           color: #000;
+           border-color: var(--accent-primary);
+           box-shadow: 0 0 8px var(--border-glow);
        }
 
        .dither-controls {

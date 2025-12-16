@@ -22,6 +22,8 @@ var State = {
     ditherColor2: '#ffffff',
     ditherOpacity1: 100,
     ditherOpacity2: 100,
+    ditherMode: 'draw', // 'draw' or 'fill'
+    ditherBrushSize: 1,
     
     // Frame structure: { layers: [ { name: string, visible: bool, data: ImageData }, ... ] }
     frames: [],

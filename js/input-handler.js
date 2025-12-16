@@ -363,6 +363,9 @@ const InputHandler = {
 
         // Setup dither tool controls
         this.setupDitherControls();
+        
+        // Setup dither mode controls
+        this.setupDitherModeControls();
 
         // Drawing events
         UI.previewLayer.addEventListener('mousedown', (e) => this.onDrawStart(e));
@@ -478,24 +481,24 @@ const InputHandler = {
                     if (e.target === btn || e.target.closest('.tool-submenu .tool-btn') === btn) {
                         e.stopPropagation(); // Prevent event from bubbling to parent menu
                         const toolType = btn.dataset.type;
-    
+
                         // Set the tool
                         ToolManager.setTool(toolType);
                         // Ensure eyedropper tool is ready to use immediately
                         if (toolType === 'eyedropper') {
                             State.isDrawing = false;
                         }
-    
+
                         // Update the panel for the selected tool
                         if (typeof UIManager !== 'undefined' && UIManager.updatePanelForTool) {
                             UIManager.updatePanelForTool(toolType);
                         }
-    
+
                         // Activate the unified panel and ensure it's visible
                         const unifiedPanel = document.getElementById('unified-panel');
                         const toolsTab = document.querySelector('.tab[data-content="unified-panel"]');
                         const dropinsContainer = document.querySelector('.dropins-container');
-    
+
                         if (unifiedPanel) {
                             unifiedPanel.classList.remove('hidden');
                             unifiedPanel.classList.add('active');
@@ -512,16 +515,21 @@ const InputHandler = {
                         if (dropinsContainer) {
                             dropinsContainer.classList.add('showing');
                         }
-    
+
                         // Ensure the right panel sections are visible
                         const panelPreview = document.getElementById('panel-preview');
                         const panelPalette = document.getElementById('panel-palette');
                         const panelToolOptions = document.getElementById('panel-tool-options');
-    
+
                         if (panelPreview) panelPreview.classList.remove('hidden');
                         if (panelPalette) panelPalette.classList.remove('hidden');
                         if (panelToolOptions) panelToolOptions.classList.remove('hidden');
-    
+
+                        // Special handling for dither tool - show effects tab and dither panel
+                        if (toolType === 'dither') {
+                            this.showDitherEffectsPanel();
+                        }
+
                         // Close all submenus after selection with a slight delay
                         setTimeout(() => {
                             document.querySelectorAll('.tool-submenu').forEach(menu => {
@@ -714,6 +722,31 @@ const InputHandler = {
             UI.blurDisplay.textContent = State.brushBlur;
         });
 
+        // Dither brush size slider
+        const ditherBrushSizeSlider = document.getElementById('ditherbrushSizeSlider');
+        const ditherBrushSizeDisplay = document.getElementById('ditherbrushSizeDisplay');
+        
+        if (ditherBrushSizeSlider && ditherBrushSizeDisplay) {
+            ditherBrushSizeSlider.addEventListener('input', (e) => {
+                State.ditherBrushSize = parseInt(e.target.value);
+                ditherBrushSizeDisplay.textContent = State.ditherBrushSize;
+            });
+        }
+
+        // Preset dither brush size buttons
+        document.querySelectorAll('.preset-ditherbrush-size').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const size = parseInt(e.target.dataset.size);
+                State.ditherBrushSize = size;
+                if (ditherBrushSizeSlider) {
+                    ditherBrushSizeSlider.value = size;
+                }
+                if (ditherBrushSizeDisplay) {
+                    ditherBrushSizeDisplay.textContent = size;
+                }
+            });
+        });
+
         // Preset brush size buttons
         document.querySelectorAll('.preset-brush-size').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -727,6 +760,12 @@ const InputHandler = {
 
         // Initialize preset buttons on load
         this.updatePresetBrushButtons(State.brushSize);
+
+        // Initialize dither brush size slider and display
+        if (ditherBrushSizeSlider && ditherBrushSizeDisplay) {
+            ditherBrushSizeSlider.value = State.ditherBrushSize;
+            ditherBrushSizeDisplay.textContent = State.ditherBrushSize;
+        }
 
         UI.fpsSlider.addEventListener('input', (e) => {
             AnimationManager.updateFPS(parseInt(e.target.value));
@@ -1457,6 +1496,7 @@ const InputHandler = {
             tool: State.tool,
             brushSize: State.brushSize,
             brushBlur: State.brushBlur,
+            ditherBrushSize: State.ditherBrushSize,
             frames: State.frames,
             currentFrameIndex: State.currentFrameIndex,
             activeLayerIndex: State.activeLayerIndex,
@@ -1471,7 +1511,7 @@ const InputHandler = {
      */
     setState(state) {
         if (!state) return;
-        
+         
         // Update basic properties
         State.width = state.width;
         State.height = state.height;
@@ -1481,6 +1521,7 @@ const InputHandler = {
         State.tool = state.tool;
         State.brushSize = state.brushSize;
         State.brushBlur = state.brushBlur || 0;
+        State.ditherBrushSize = state.ditherBrushSize || State.ditherBrushSize || 1;
         State.frames = state.frames;
         State.currentFrameIndex = state.currentFrameIndex || 0;
         State.activeLayerIndex = state.activeLayerIndex || 0;
@@ -1504,6 +1545,13 @@ const InputHandler = {
         UI.brushSizeDisplay.textContent = State.brushSize;
         UI.blurSlider.value = State.brushBlur;
         UI.blurDisplay.textContent = State.brushBlur;
+        
+        // Update dither brush size UI if elements exist
+        if (ditherBrushSizeSlider && ditherBrushSizeDisplay) {
+            ditherBrushSizeSlider.value = State.ditherBrushSize;
+            ditherBrushSizeDisplay.textContent = State.ditherBrushSize;
+        }
+        
         UI.fpsSlider.value = State.fps;
         UI.fpsDisplay.textContent = State.fps;
         
@@ -1587,6 +1635,58 @@ const InputHandler = {
         document.querySelectorAll('.preset-brush-size').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.size) === currentSize);
         });
+    },
+
+    /**
+     * Show the effects tab and dither panel when dither tool is selected
+     */
+    showDitherEffectsPanel() {
+        // Show the effects panel tab
+        const effectsTab = document.querySelector('.tab[data-content="effects-panel"]');
+        const effectsPanel = document.getElementById('effects-panel');
+        const dropinsContainer = document.querySelector('.dropins-container');
+
+        if (effectsTab && effectsPanel && dropinsContainer) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Add active class to effects tab
+            effectsTab.classList.add('active');
+
+            // Remove active class from all panel content
+            document.querySelectorAll('aside.content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Add active class to effects panel
+            effectsPanel.classList.add('active');
+
+            // Ensure dropins container is showing
+            if (!dropinsContainer.classList.contains('showing')) {
+                dropinsContainer.classList.add('showing');
+            }
+
+            // Show the dither options panel within effects
+            if (typeof rightPanelManager !== 'undefined' && rightPanelManager.switchToEffectsTab) {
+                rightPanelManager.switchToEffectsTab('dither');
+            } else {
+                // Fallback: manually show dither options
+                const ditherOptions = document.getElementById('dither-options');
+                if (ditherOptions) {
+                    ditherOptions.classList.remove('hidden');
+                }
+
+                // Hide other effect panels
+                const allEffectPanels = document.querySelectorAll('#effects-panel .sub-panel-section');
+                allEffectPanels.forEach(panel => {
+                    if (panel.id !== 'dither-options') {
+                        panel.classList.add('hidden');
+                    }
+                });
+            }
+        }
     },
 
     /**
@@ -1841,7 +1941,7 @@ const InputHandler = {
 
         if (patternSelector) {
             patternSelector.value = State.ditherPattern;
-            
+
             patternSelector.addEventListener('change', (e) => {
                 State.ditherPattern = e.target.value;
                 if (patternDisplay) {
@@ -1855,6 +1955,46 @@ const InputHandler = {
 
         // Initialize dither preview
         this.updateDitherPreview();
+    },
+
+    /**
+     * Setup dither mode controls
+     */
+    setupDitherModeControls() {
+        // Initialize dither mode state if not present
+        if (State.ditherMode === undefined) {
+            State.ditherMode = 'draw';
+        }
+
+        // Set up mode buttons
+        const drawModeBtn = document.getElementById('ditherDrawMode');
+        const fillModeBtn = document.getElementById('ditherFillMode');
+
+        if (drawModeBtn && fillModeBtn) {
+            // Set initial active state
+            if (State.ditherMode === 'draw') {
+                drawModeBtn.classList.add('active');
+                fillModeBtn.classList.remove('active');
+            } else {
+                drawModeBtn.classList.remove('active');
+                fillModeBtn.classList.add('active');
+            }
+
+            // Add event listeners
+            drawModeBtn.addEventListener('click', () => {
+                State.ditherMode = 'draw';
+                drawModeBtn.classList.add('active');
+                fillModeBtn.classList.remove('active');
+                this.showNotification('Dither mode set to Draw', 'success');
+            });
+
+            fillModeBtn.addEventListener('click', () => {
+                State.ditherMode = 'fill';
+                drawModeBtn.classList.remove('active');
+                fillModeBtn.classList.add('active');
+                this.showNotification('Dither mode set to Fill', 'success');
+            });
+        }
     },
 
     /**

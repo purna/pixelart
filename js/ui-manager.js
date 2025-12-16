@@ -6,9 +6,11 @@ const UIManager = {
 
     init() {
         this.setupPanelToggle();
+        this.setupUIToggle();
         this.setupContextSwitching();
         this.setupMenuSystem();
         this.initDropins();
+        this.initFloatingBrushSizePanel();
         // Set initial panel state for default tool (pencil)
         this.updatePanelForTool('pencil');
     },
@@ -164,6 +166,56 @@ const UIManager = {
 
         // Set up close buttons for sliding panels
         this.setupSlidingPanelCloseButtons();
+    },
+
+    /**
+     * Set up UI toggle button for floating elements
+     */
+    setupUIToggle() {
+        const uiBtn = document.getElementById('uiBtn');
+        if (!uiBtn) return;
+
+        uiBtn.addEventListener('click', () => {
+            this.toggleFloatingUIElements();
+        });
+    },
+
+    /**
+     * Toggle visibility of floating UI elements
+     */
+    toggleFloatingUIElements() {
+        const colorHistory = document.querySelector('.floating-color-history');
+        const brushSizes = document.querySelector('.floating-brush-sizes');
+        const uiBtn = document.getElementById('uiBtn');
+
+        if (!colorHistory || !brushSizes || !uiBtn) return;
+
+        // Toggle visibility
+        const isVisible = !colorHistory.classList.contains('hidden');
+        
+        if (isVisible) {
+            // Hide elements
+            colorHistory.classList.add('hidden');
+            brushSizes.classList.add('hidden');
+            uiBtn.classList.add('ui-hidden');
+            uiBtn.title = 'Show UI Elements';
+        } else {
+            // Show elements
+            colorHistory.classList.remove('hidden');
+            brushSizes.classList.remove('hidden');
+            uiBtn.classList.remove('ui-hidden');
+            uiBtn.title = 'Hide UI Elements';
+        }
+
+        // Update button icon based on state
+        const icon = uiBtn.querySelector('i');
+        if (icon) {
+            if (isVisible) {
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                icon.className = 'fas fa-eye';
+            }
+        }
     },
 
     /**
@@ -506,5 +558,67 @@ const UIManager = {
         }
 
         console.log(`Selected dropin: ${$el.dataset.content}`);
+    },
+
+    /**
+     * Initialize floating brush size panel
+     */
+    initFloatingBrushSizePanel() {
+        // Check if the floating brush size panel exists
+        const floatingBrushPanel = document.querySelector('.floating-brush-sizes');
+        if (!floatingBrushPanel) {
+            console.warn('Floating brush size panel not found');
+            return;
+        }
+
+        const brushSizeSwatches = floatingBrushPanel.querySelectorAll('.brush-size-swatch');
+        const brushSizeSlider = document.getElementById('brushSizeSlider');
+        const brushSizeDisplay = document.getElementById('brushSizeDisplay');
+
+        if (!brushSizeSwatches.length || !brushSizeSlider || !brushSizeDisplay) {
+            console.warn('Brush size controls not found');
+            return;
+        }
+
+        // Set initial active state based on current brush size
+        const currentBrushSize = brushSizeSlider.value;
+        brushSizeSwatches.forEach(swatch => {
+            if (swatch.getAttribute('data-brush-size') === currentBrushSize.toString()) {
+                swatch.classList.add('active');
+            }
+        });
+
+        // Add click event listeners to brush size swatches
+        brushSizeSwatches.forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                const size = parseInt(this.getAttribute('data-brush-size'));
+
+                // Update slider and display
+                brushSizeSlider.value = size;
+                brushSizeDisplay.textContent = size;
+
+                // Update active state
+                brushSizeSwatches.forEach(s => s.classList.remove('active'));
+                this.classList.add('active');
+
+                // Trigger input event to update the tool
+                const event = new Event('input', { bubbles: true });
+                brushSizeSlider.dispatchEvent(event);
+            });
+        });
+
+        // Update active state when slider changes
+        brushSizeSlider.addEventListener('input', function() {
+            const size = parseInt(this.value);
+            brushSizeSwatches.forEach(swatch => {
+                if (swatch.getAttribute('data-brush-size') === size.toString()) {
+                    swatch.classList.add('active');
+                } else {
+                    swatch.classList.remove('active');
+                }
+            });
+        });
+
+        console.log('Floating brush size panel initialized');
     }
 };

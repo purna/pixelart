@@ -28,7 +28,7 @@
         }
     </style>
     <!-- CSS for stacked icons -->
-   
+    
     <!-- Local Font Awesome Implementation -->
     <link rel="stylesheet" href="fonts/fontawesome-free-6.5.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -62,6 +62,12 @@
             <button id="redoBtn" class="btn icon-only" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
 
             <div class="separator" style="height: 20px; width: 1px; margin: 0 10px;"></div>
+
+            <button id="uiBtn" class="btn icon-only" title="Hide UI Elements"> 
+                <i class="fa-solid fa-eye"></i>
+            </button>
+
+           
 
             <div class="zoom-controls-header">
                 <button id="zoomOutBtn" class="btn icon-only" title="Zoom Out (Ctrl/-)"><i
@@ -98,6 +104,8 @@ Draw single pixels"><i class="fas fa-pencil-alt"></i></div>
 Draw with soft edges"><i class="fas fa-paint-brush"></i></div>
                     <div class="tool-btn" data-action="tool" data-type="eraser" data-tooltip="**Eraser Tool**
 Erase pixels"><i class="fas fa-eraser"></i></div>
+                     <div class="tool-btn" data-action="tool" data-type="dither" data-tooltip="**Dither Tool**
+dither pixels"><i class="fa-solid fa-chess-board"></i></div>
                 </div>
             </div>
             <div class="separator"></div>
@@ -146,6 +154,17 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                     <div class="color-swatch" data-color-index="1" title="Recent Color 2 (Press 2)"></div>
                     <div class="color-swatch" data-color-index="2" title="Recent Color 3 (Press 3)"></div>
                     <div class="color-swatch" data-color-index="3" title="Recent Color 4 (Press 4)"></div>
+                </div>
+            </div>
+
+            <!-- Floating Brush Size Panel -->
+            <div class="floating-brush-sizes">
+                <div class="brush-size-swatches">
+                    <div class="brush-size-swatch" data-brush-size="1" title="Brush Size 1"></div>
+                    <div class="brush-size-swatch" data-brush-size="2" title="Brush Size 2"></div>
+                    <div class="brush-size-swatch" data-brush-size="3" title="Brush Size 3"></div>
+                    <div class="brush-size-swatch" data-brush-size="4" title="Brush Size 4"></div>
+                    <div class="brush-size-swatch" data-brush-size="5" title="Brush Size 5"></div>
                 </div>
             </div>
 
@@ -370,7 +389,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                         data-tooltip="**Mirror Tool**" data-content="mirror-options"><i
                                             class="fas fa-columns"></i>
                                     </button>
-                                    <button class="tool-btn" data-tool="tool" id="ditherBtn" title="Dither (D)" data-type="dither"
+                                    <button class="tool-btn" data-tool="dither" id="ditherBtn" title="Dither (D)" data-type="dither"
                                         data-tooltip="**Dither Tool**" data-content="dither-options"><i
                                             class="fas fa-th"></i>
                                     </button>
@@ -496,9 +515,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                     </div>
 
                                     <div class="mirror-note">
-                                        <small
-                                            style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                            <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                        <small>
+                                            <i class="fas fa-info-circle"></i>
                                             Select mirror axis before using the mirror tool
                                         </small>
                                     </div>
@@ -511,9 +529,43 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                             Create custom dither patterns with color blending
                                         </div>
                                     </div>
-                               
+
+                                    <!-- Dither Mode Selection -->
+                                    <div class="dither-mode-controls">
+                                        <label class="dither-label">Dither Mode</label>
+                                        <div class="dither-mode-buttons">
+                                            <button class="dither-mode-btn" id="ditherDrawMode" data-mode="draw">
+                                                <i class="fas fa-pencil-alt"></i> Draw
+                                            </button>
+                                            <button class="dither-mode-btn" id="ditherFillMode" data-mode="fill">
+                                                <i class="fas fa-fill-drip"></i> Fill
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <!-- Dither Color Controls -->
                                     <div class="dither-controls">
+
+                                        <div id="dither-tools-container" class="tool-options-control brush-size-control">
+                                            <label class="tool-option-label">Dither Brush Size </label>
+                                            <div class="slider-value-container">
+                                                <div class="slider-container" style="width: 80%;">
+                                                    <input type="range" id="ditherbrushSizeSlider" min="1" max="20" value="1"
+                                                        class="tool-option-slider">
+                                                </div>
+                                                <div class="value-container" style="width: 20%; text-align: right;">
+                                                    <span id="ditherbrushSizeDisplay">1</span>px
+                                                </div>
+                                            </div>
+                                            <div class="preset-ditherbrush-sizes">
+                                                <button class="preset-ditherbrush-size" data-size="1">1</button>
+                                                <button class="preset-ditherbrush-size" data-size="2">2</button>
+                                                <button class="preset-ditherbrush-size" data-size="3">3</button>
+                                                <button class="preset-ditherbrush-size" data-size="4">4</button>
+                                                <button class="preset-ditherbrush-size" data-size="5">5</button>
+                                            </div>
+                                        </div>
+
                                         <div class="dither-color-row">
                                             <div class="dither-color-control">
                                                 <label class="dither-label">Color 1</label>
@@ -588,10 +640,9 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                     </div>
 
                                     <div class="mirror-note">
-                                        <small
-                                            style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                            <i class="fas fa-info-circle" style="font-size:10px;"></i>
-                                            Select two colors and adjust opacity, then choose pattern and apply to layer
+                                        <small>
+                                            <i class="fas fa-info-circle"></i>
+                                            Select two colors and adjust opacity, then choose pattern and apply to layer. Only the first colour will be applied if the brush is less than 2 pixels.
                                         </small>
                                     </div>
                                 </div>
@@ -634,9 +685,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                     </button>
 
                                     <div class="mirror-note">
-                                        <small
-                                            style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                            <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                        <small>
+                                            <i class="fas fa-info-circle"></i>
                                             Adjust brightness/contrast and apply to the selected layer
                                         </small>
                                     </div>
@@ -656,9 +706,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
                                     </div>
                                     <div class="mirror-note">
-                                        <small
-                                            style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                            <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                        <small>
+                                            <i class="fas fa-info-circle" ></i>
                                             Select a filter
                                         </small>
                                     </div>
@@ -758,9 +807,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
 
                                 <div  class="mirror-note">
-                                    <small
-                                        style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                        <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                    <small>
+                                        <i class="fas fa-info-circle" ></i>
                                         <div id="selectnote">
                                            <strong>Selection Tool <span id="title"></span></strong>
                                             <br>Drag the selection to move it. You may switch to other layers and frames.
@@ -808,9 +856,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                 </div>
 
                                 <div class="mirror-note">
-                                    <small
-                                        style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                        <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                    <small>
+                                        <i class="fas fa-info-circle"></i>
                                         Select align option before using the align tool
                                     </small>
                                 </div>
@@ -907,9 +954,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                           
 
                                 <div class="mirror-note">
-                                    <small
-                                        style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                        <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                    <small>
+                                        <i class="fas fa-info-circle"></i>
                                         Select flip axis before using the flip tool
                                     </small>
                                 </div>
@@ -1097,9 +1143,8 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
 
 
                                 <div class="mirror-note">
-                                    <small
-                                        style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
-                                        <i class="fas fa-info-circle" style="font-size:10px;"></i>
+                                    <small>
+                                        <i class="fas fa-info-circle"></i>
                                         Select align option before using the align tool
                                     </small>
                                 </div>
@@ -1685,6 +1730,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
         <script src="js/file-manager.js"></script>
         <script src="js/ui-manager.js"></script>
         <script src="js/input-handler.js"></script>
+        <script src="js/dither-manager.js"></script>
         <script src="js/tilemap-manager.js"></script>
         <script src="js/tutorialConfig.js"></script>
         <script src="js/tutorialSystem.js"></script>
@@ -1722,6 +1768,7 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                 });
             });
         </script>
+        
 </body>
 
 

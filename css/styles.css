@@ -921,6 +921,7 @@ input[type="color"]:focus {
 
 
 
+
 /* ============================================= */
 /* 14. TILEMAP PANEL */
 /* ============================================= */
@@ -1316,9 +1317,56 @@ input[type="color"]:focus {
     }
 }
 
-/* ======================================================================================== */
-/* END OF PIXEL ART STUDIO PRO STYLESHEET */
-/* ======================================================================================== */
+/* Floating Color History Overlay */
+.floating-color-history {
+    position: fixed;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.color-history-swatches {
+    display: flex;
+    gap: 4px;
+}
+
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+}
+
+.color-swatch.active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5);
+}
+
+/* Color history label */
+.color-history-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 2px;
+    font-family: 'Inter', sans-serif;
+}
+
 
 /* ============================================= */
 /* 25. MOVE CONTAINER TOOL BUTTONS HIGHLIGHT */
@@ -1374,3 +1422,92 @@ input[type="color"]:focus {
     z-index: -1;
     opacity: 0.8;
 }
+
+
+/* ============================================= */
+/* 26. FLOATING BRUSH SIZE PANEL */
+/* ============================================= */
+
+
+/* Floating Color History Overlay */
+.floating-brush-sizes {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.3s ease;
+}
+
+/* Hidden state for floating elements */
+.floating-color-history.hidden,
+.floating-brush-sizes.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+}
+
+/* UI Button styling */
+#uiBtn.ui-hidden {
+    background: rgba(255, 0, 110, 0.2);
+    border: 1px solid var(--accent-secondary);
+}
+
+#uiBtn.ui-hidden:hover {
+    background: rgba(255, 0, 110, 0.3);
+}
+
+
+.brush-size-swatches {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+}
+
+.brush-size-swatch {
+    width: 30px;
+    height: 20px;
+    background: var(--bg-light);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+}
+
+.brush-size-swatch:hover {
+    transform: scale(1.1);
+    background: var(--bg-medium);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+.brush-size-swatch.active {
+    background: var(--accent-primary);
+    color: #000;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--border-glow);
+}
+
+.brush-size-swatch::before {
+    content: attr(data-brush-size);
+}
+
+/* ======================================================================================== */
+/* END OF PIXEL ART STUDIO PRO STYLESHEET */
+/* ======================================================================================== */
