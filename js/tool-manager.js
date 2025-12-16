@@ -438,6 +438,10 @@ const ToolManager = {
         } else if (State.tool === 'mirror') {
             // Mirror tool behaves like a drawing tool - just start drawing
             // The actual mirroring logic is handled in move() and end() methods
+        } else if (State.tool.startsWith('select-')) {
+            // Handle selection tools
+            const selectionType = State.tool.replace('select-', '');
+            this.startSelection(x, y, selectionType);
         }
     },
 
@@ -520,6 +524,9 @@ const ToolManager = {
         } else if (State.tool === 'move') {
             // Show move preview during drag
             this.showMovePreview(x, y);
+        } else if (State.tool.startsWith('select-')) {
+            // Update selection during drag
+            this.updateSelection(x, y);
         }
     },
 
@@ -553,6 +560,9 @@ const ToolManager = {
 
             this.shiftLayer(dx, dy);
             InputHandler.showNotification('Layer content moved!', 'success');
+        } else if (State.tool.startsWith('select-')) {
+            // End selection and capture pixels
+            this.endSelection();
         }
 
         ColorManager.addToHistory(State.color);
@@ -1115,6 +1125,11 @@ const ToolManager = {
         this.selection.endY = y;
         this.selection.type = type;
         this.selection.pixels = null;
+        
+        // For lasso tool, initialize the points array
+        if (type === 'lasso') {
+            this.selection.lassoPoints = [{x, y}];
+        }
     },
 
     /**
@@ -1138,6 +1153,8 @@ const ToolManager = {
             this.drawSelectionRect();
         } else if (this.selection.type === 'circle') {
             this.drawSelectionCircle();
+        } else if (this.selection.type === 'lasso') {
+            this.drawSelectionLasso();
         }
     },
 
@@ -1188,6 +1205,8 @@ const ToolManager = {
             this.captureRectSelection(layer.data);
         } else if (this.selection.type === 'circle') {
             this.captureCircleSelection(layer.data);
+        } else if (this.selection.type === 'lasso') {
+            this.captureLassoSelection(layer.data);
         }
     },
 
@@ -1277,6 +1296,109 @@ const ToolManager = {
 
         this.selection.pixels = selectionData;
         InputHandler.showNotification(`Circular selection captured (radius: ${r} pixels)`, 'success');
+    },
+
+    /**
+     * Draw lasso selection preview (freehand)
+     */
+    drawSelectionLasso() {
+        // For lasso, we need to store the path points
+        if (!this.selection.lassoPoints) {
+            this.selection.lassoPoints = [];
+        }
+        
+        // Add current point to the path
+        this.selection.lassoPoints.push({
+            x: this.selection.endX,
+            y: this.selection.endY
+        });
+        
+        // Draw the lasso path
+        if (this.selection.lassoPoints.length > 1) {
+            pCtx.beginPath();
+            pCtx.moveTo(this.selection.lassoPoints[0].x, this.selection.lassoPoints[0].y);
+            
+            for (let i = 1; i < this.selection.lassoPoints.length; i++) {
+                pCtx.lineTo(this.selection.lassoPoints[i].x, this.selection.lassoPoints[i].y);
+            }
+            
+            pCtx.stroke();
+        }
+    },
+
+    /**
+     * Capture lasso selection pixels
+     */
+    captureLassoSelection(imageData) {
+        if (!this.selection.lassoPoints || this.selection.lassoPoints.length < 3) {
+            InputHandler.showNotification('Lasso selection too small', 'error');
+            return;
+        }
+        
+        // Find bounding box of lasso selection
+        let minX = State.width, minY = State.height, maxX = 0, maxY = 0;
+        
+        for (const point of this.selection.lassoPoints) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+        }
+        
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+        
+        // Create a new ImageData for the selection
+        const selectionData = new ImageData(width, height);
+        const srcData = imageData.data;
+        const destData = selectionData.data;
+        
+        // Clear the selection data (transparent background)
+        for (let i = 0; i < destData.length; i += 4) {
+            destData[i] = 0;
+            destData[i + 1] = 0;
+            destData[i + 2] = 0;
+            destData[i + 3] = 0;
+        }
+        
+        // Use point-in-polygon algorithm to determine which pixels are inside the lasso
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const canvasX = minX + x;
+                const canvasY = minY + y;
+                
+                // Check if this pixel is inside the lasso polygon
+                if (this.isPointInPolygon(canvasX, canvasY, this.selection.lassoPoints)) {
+                    const srcIdx = (canvasY * State.width + canvasX) * 4;
+                    const destIdx = (y * width + x) * 4;
+                    
+                    // Copy pixel data
+                    destData[destIdx] = srcData[srcIdx];
+                    destData[destIdx + 1] = srcData[srcIdx + 1];
+                    destData[destIdx + 2] = srcData[srcIdx + 2];
+                    destData[destIdx + 3] = srcData[srcIdx + 3];
+                }
+            }
+        }
+        
+        this.selection.pixels = selectionData;
+        InputHandler.showNotification(`Lasso selection captured (${width}x${height} pixels)`, 'success');
+    },
+
+    /**
+     * Point-in-polygon algorithm (ray casting)
+     */
+    isPointInPolygon(x, y, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+            
+            const intersect = ((yi > y) !== (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
     },
 
     /**

@@ -78,12 +78,18 @@ const tooltip = new Tooltip();
 document.addEventListener('DOMContentLoaded', () => {
     // Check if tooltips should be enabled based on settings
     const shouldShowTooltips = () => {
-        // Check if SettingsManager exists and has the setting
+        // Check Config first for tooltip settings
+        if (typeof Config !== 'undefined' && Config.settings && Config.settings.tooltips) {
+            return Config.settings.tooltips.enabled;
+        }
+        
+        // Fallback to SettingsManager if Config not available
         if (typeof SettingsManager !== 'undefined') {
             return SettingsManager.settings.showTooltips;
         }
-        // Default to true if SettingsManager not available
-        return true;
+        
+        // Default to false if no config found (to respect user's request)
+        return false;
     };
 
     // Function to update tooltip event listeners based on setting
@@ -122,5 +128,56 @@ document.addEventListener('DOMContentLoaded', () => {
             originalApplySettings.call(this);
             updateTooltipListeners();
         };
+    }
+
+    // Setup selection descriptions using efficient event delegation
+    const setupSelectionDescriptions = () => {
+        const selectnoteElement = document.getElementById('selectnote');
+        if (!selectnoteElement) return;
+        
+        const header = selectnoteElement.querySelector('header');
+        if (!header) return;
+        
+        // Store original header content
+        const originalHeaderContent = header.innerHTML;
+        
+        // Use event delegation on the move-container for better performance
+        const moveContainer = document.querySelector('.move-container.tool-buttons');
+        if (moveContainer) {
+            moveContainer.addEventListener('mouseover', (e) => {
+                const button = e.target.closest('.tool-btn[data-type^="select-"]');
+                if (button) {
+                    const dataContent = button.getAttribute('data-content');
+                    if (dataContent) {
+                        header.innerHTML = '<strong>' + dataContent + '</strong>';
+                    }
+                }
+            }, { passive: true });
+            
+            moveContainer.addEventListener('mouseout', (e) => {
+                // Only reset if we're leaving the container entirely, not just moving between buttons
+                if (!e.relatedTarget || !e.relatedTarget.closest('.move-container.tool-buttons')) {
+                    header.innerHTML = originalHeaderContent;
+                }
+            }, { passive: true });
+        }
+    };
+ 
+    // Initial setup for selection descriptions
+    setupSelectionDescriptions();
+ 
+    // Re-setup when content changes (for dynamic content)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes.length) {
+                setupSelectionDescriptions();
+            }
+        });
+    });
+ 
+    // Observe the transform panel for dynamic changes
+    const transformPanel = document.getElementById('move-options');
+    if (transformPanel) {
+        observer.observe(transformPanel, { childList: true, subtree: true });
     }
 });

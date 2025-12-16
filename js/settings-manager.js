@@ -7,7 +7,7 @@ const SettingsManager = {
     modalListenersSetup: false,
     settings: {
         showGrid: true,
-        showTooltips: true,
+        showTooltips: (typeof Config !== 'undefined' && Config.settings && Config.settings.tooltips) ? Config.settings.tooltips.enabled : false,
         showHelpers: true,
         showMinimap: true,
         snapToGrid: false,
@@ -320,10 +320,12 @@ const SettingsManager = {
 
     resetSettings() {
         if (confirm('Reset all settings to default values?')) {
-            // Reset to defaults
+            // Reset to defaults, using Config values where available
+            const tooltipDefault = (typeof Config !== 'undefined' && Config.settings && Config.settings.tooltips) ? Config.settings.tooltips.enabled : false;
+            
             this.settings = {
                 showGrid: true,
-                showTooltips: true,
+                showTooltips: tooltipDefault,
                 showHelpers: true,
                 showMinimap: true,
                 snapToGrid: false,

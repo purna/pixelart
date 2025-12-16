@@ -53,5 +53,8 @@ var State = {
     
     // Offscreen canvases for performance
     offscreenCanvas: document.createElement('canvas'),
-    layerCanvas: document.createElement('canvas')
+    layerCanvas: document.createElement('canvas'),
+    
+    // Selection tools state
+    copiedSelection: null
 };

@@ -36,6 +36,13 @@
     <link rel="stylesheet" href="css/settings.css">
     <link rel="stylesheet" href="css/modal.css">
     <link rel="stylesheet" href="css/tutorials.css">
+    <style>
+        .tool-btn.selected {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 4px;
+        }
+    </style>
 
 
 
@@ -714,35 +721,54 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
                                 <div class="move-container tool-buttons">
 
                                         <div class="tool-btn" data-action="tool" data-type="select-rect" data-tooltip="**Rectangular Selection**
-                                        Draw rectangular selections">
+                                        Draw rectangular selections" data-title="Rectangular selection (R)">
                                             <div class="icon-stack">
                                                 <i class="fas fa-mouse-pointer base-icon"></i>
                                                 <i class="far fa-square overlay-icon"></i>
                                             </div>
-                                        </div>
+                                         
+                                         </div>
                                         <div class="tool-btn" data-action="tool" data-type="select-circle" data-tooltip="**Circular Selection**
-                                        Draw circular selections">
+                                        Draw circular selections" data-title="Circular selection (C)">
                                             <div class="icon-stack">
                                                 <i class="fas fa-mouse-pointer base-icon"></i>
                                                 <i class="far fa-circle overlay-icon"></i>
                                             </div>
+
+                                       
                                         </div>
                                         <div class="tool-btn" data-action="tool" data-type="select-lasso" data-tooltip="**Lasso Selection**
-                                        Draw freehand selections">
+                                        Draw freehand selections" data-title="Lasso selection (H)">
                                             <div class="icon-stack">
                                                 <i class="fas fa-mouse-pointer base-icon"></i>
                                                 <i class="fas fa-draw-polygon overlay-icon"></i>
                                             </div>
+                                           
+                                        </div>
+                                         <div class="tool-btn" data-action="tool" data-type="select-shape" data-tooltip="**Shape Selection**
+                                        Click shape for selections" data-title="Shape selection (Z)">
+                                            <div class="icon-stack">
+                                                <i class="fas fa-mouse-pointer base-icon"></i>
+                                                <i class="fa-solid fa-bacterium  overlay-icon"></i>
+                                            </div>
+                                          
                                         </div>
 
                                 </div>
 
 
-                                <div class="mirror-note">
+                                <div  class="mirror-note">
                                     <small
                                         style="color: var(--text-secondary); display:flex; align-items:center; gap:6px; margin-top:12px;">
                                         <i class="fas fa-info-circle" style="font-size:10px;"></i>
-                                        Select align option before using the align tool
+                                        <div id="selectnote">
+                                           <strong>Selection Tool <span id="title"></span></strong>
+                                            <br>Drag the selection to move it. You may switch to other layers and frames.
+                                            <br><span class="pill">CMD+C </span> Copy the selected area
+                                            <br><span class="pill">CMD+V</span> Paste the copied area
+                                            <br><span class="pill">SHIFT</span> Hold to move the content
+
+                                        </div>
                                     </small>
                                 </div>
 
@@ -1665,6 +1691,37 @@ Draw circles and ellipses"><i class="far fa-circle"></i></div>
         <script src="js/settings-manager.js"></script>
         <script src="js/notifications.js"></script>
         <script src="js/app.js"></script>
+        <script>
+            // Add mouseover and mouseout event listeners for the tool buttons
+            document.addEventListener('DOMContentLoaded', function() {
+                const toolButtons = document.querySelectorAll('.tool-btn[data-title]');
+                const titleDiv = document.getElementById('title');
+                
+                toolButtons.forEach(button => {
+                    button.addEventListener('mouseover', function() {
+                        const title = this.getAttribute('data-title');
+                        if (title && titleDiv) {
+                            titleDiv.textContent = title;
+                        }
+                    });
+                    
+                    button.addEventListener('mouseout', function() {
+                        if (titleDiv) {
+                            titleDiv.textContent = '';
+                        }
+                    });
+                });
+                
+                // Add highlight functionality for buttons in the move-options section
+                const moveOptionsButtons = document.querySelectorAll('#move-options .tool-btn');
+                moveOptionsButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        moveOptionsButtons.forEach(btn => btn.classList.remove('selected'));
+                        this.classList.add('selected');
+                    });
+                });
+            });
+        </script>
 </body>
 
 

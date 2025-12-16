@@ -61,7 +61,7 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: 
+    background:
         linear-gradient(rgba(0, 255, 65, 0.01) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 217, 255, 0.01) 1px, transparent 1px);
     background-size: 2px 2px;
@@ -1094,6 +1094,42 @@ input[type="color"]:focus {
 }
 
 /* ============================================= */
+/* 16.5 SELECTION NOTE STYLING */
+/* ============================================= */
+
+/* Style for the selectnote element that shows selection tool instructions */
+#selectnote {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-left: 4px;
+    transition: all 0.2s ease;
+    line-height: 1.4;
+}
+
+#selectnote strong {
+    color: var(--accent-primary);
+    font-weight: 500;
+}
+
+#selectnote .pill {
+    display: inline-block;
+    background: rgba(0, 255, 65, 0.1);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    border-radius: 12px;
+    padding: 2px 6px;
+    margin: 0 2px;
+    font-size: 10px;
+    color: var(--accent-primary);
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+/* Hide the selection-description elements since we're using selectnote instead */
+.selection-description {
+    display: none !important;
+}
+
+/* ============================================= */
 /* 17. NOTIFICATIONS */
 /* ============================================= */
 
@@ -1283,92 +1319,58 @@ input[type="color"]:focus {
 /* ======================================================================================== */
 /* END OF PIXEL ART STUDIO PRO STYLESHEET */
 /* ======================================================================================== */
-/* Floating Color History Overlay */
-.floating-color-history {
-    position: fixed;
-    bottom: 180px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    background: var(--bg-light);
-    border: 1px solid var(--border-color);
+
+/* ============================================= */
+/* 25. MOVE CONTAINER TOOL BUTTONS HIGHLIGHT */
+/* ============================================= */
+
+/* Highlight for selection buttons in move-container */
+#move-options .move-container.tool-buttons .tool-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+#move-options .move-container.tool-buttons .tool-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+    z-index: 0;
+}
+
+#move-options .move-container.tool-buttons .tool-btn:hover::before {
+    opacity: 1;
+}
+
+#move-options .move-container.tool-buttons .tool-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 65, 0.3);
+    border-color: var(--accent-primary);
+}
+
+#move-options .move-container.tool-buttons .tool-btn.selected {
+    background: rgba(0, 255, 65, 0.1);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+    transform: translateY(-2px);
+}
+
+#move-options .move-container.tool-buttons .tool-btn.selected::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
     border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.color-history-swatches {
-    display: flex;
-    gap: 4px;
-}
-
-.color-swatch {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.color-swatch:hover {
-    transform: scale(1.1);
-    border-color: var(--accent-color);
-}
-
-.color-swatch.active {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5);
-}
-
-/* Color history label */
-.color-history-label {
-    font-size: 10px;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 2px;
-    font-family: 'Inter', sans-serif;
-}
-
-/* ============================================= */
-/* 24. BRIGHTNESS CONTROLS */
-/* ============================================= */
-
-.brightness-presets {
-    display: flex;
-    gap: 6px;
-    margin: 10px 0;
-    flex-wrap: wrap;
-}
-
-.brightness-preset {
-    flex: 1;
-    min-width: 60px;
-    padding: 6px 8px;
-    background: var(--bg-medium);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: var(--text-primary);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.brightness-preset:hover {
-    background: var(--bg-light);
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-    box-shadow: 0 0 8px var(--border-glow);
-}
-
-.brightness-preset.active {
-    background: var(--accent-primary);
-    color: #000;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 8px var(--border-glow);
-    font-weight: bold;
+    background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 217, 255, 0.2));
+    z-index: -1;
+    opacity: 0.8;
 }
