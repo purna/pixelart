@@ -1,0 +1,202 @@
+[
+  {
+    "id": "pixel-perfect-1",
+    "name": "Pixel Perfect 1px",
+    "brushSize": 1,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "pixel-perfect-2",
+    "name": "Pixel Perfect 2px",
+    "brushSize": 2,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "pixel-perfect-3",
+    "name": "Pixel Perfect 3px",
+    "brushSize": 3,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "soft-blend-2",
+    "name": "Soft Blend 2px",
+    "brushSize": 2,
+    "brushBlur": 2,
+    "opacity": 80,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "soft-blend-3",
+    "name": "Soft Blend 3px",
+    "brushSize": 3,
+    "brushBlur": 3,
+    "opacity": 70,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "soft-blend-5",
+    "name": "Soft Blend 5px",
+    "brushSize": 5,
+    "brushBlur": 4,
+    "opacity": 60,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "layering-low-opac",
+    "name": "Layering 30% Opacity",
+    "brushSize": 2,
+    "brushBlur": 1,
+    "opacity": 30,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "layering-medium",
+    "name": "Layering 50% Opacity",
+    "brushSize": 3,
+    "brushBlur": 1,
+    "opacity": 50,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "white-erase-1",
+    "name": "White Eraser 1px",
+    "brushSize": 1,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#ffffff",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "white-erase-3",
+    "name": "White Eraser 3px",
+    "brushSize": 3,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#ffffff",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "black-outline",
+    "name": "Black Outline 1px",
+    "brushSize": 1,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "black-outline-2",
+    "name": "Black Outline 2px",
+    "brushSize": 2,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#000000",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "red-highlight",
+    "name": "Red Highlight",
+    "brushSize": 2,
+    "brushBlur": 0,
+    "opacity": 90,
+    "color": "#ff4444",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "blue-shadow",
+    "name": "Blue Shadow",
+    "brushSize": 2,
+    "brushBlur": 1,
+    "opacity": 60,
+    "color": "#4444ff",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "yellow-accent",
+    "name": "Yellow Accent",
+    "brushSize": 1,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#ffff44",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "skin-tone",
+    "name": "Skin Tone",
+    "brushSize": 2,
+    "brushBlur": 2,
+    "opacity": 75,
+    "color": "#ffdbac",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "dark-hair",
+    "name": "Dark Hair",
+    "brushSize": 2,
+    "brushBlur": 0,
+    "opacity": 100,
+    "color": "#654321",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "brown-clothing",
+    "name": "Brown Clothing",
+    "brushSize": 3,
+    "brushBlur": 1,
+    "opacity": 85,
+    "color": "#8b4513",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "green-nature",
+    "name": "Green Nature",
+    "brushSize": 2,
+    "brushBlur": 2,
+    "opacity": 70,
+    "color": "#228b22",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  },
+  {
+    "id": "metallic-shine",
+    "name": "Metallic Shine",
+    "brushSize": 2,
+    "brushBlur": 3,
+    "opacity": 80,
+    "color": "#c0c0c0",
+    "createdAt": "2025-12-21T23:09:42.844Z",
+    "lastUsed": null
+  }
+]

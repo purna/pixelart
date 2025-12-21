@@ -11,6 +11,12 @@ const BrushPresetsManager = {
         this.loadPresets();
         this.setupUI();
         this.renderPresetsList();
+        
+        // Always load default presets if none exist
+        if (this.presets.length === 0) {
+            this.loadDefaultPresets();
+        }
+        
         console.log('BrushPresetsManager initialized');
     },
 
@@ -19,6 +25,7 @@ const BrushPresetsManager = {
         const addPresetBtn = document.getElementById('addPresetBtn');
         const savePresetBtn = document.getElementById('savePresetBtn');
         const cancelPresetBtn = document.getElementById('cancelPresetBtn');
+        const loadDefaultPresetsBtn = document.getElementById('loadDefaultPresetsBtn');
         
         if (addPresetBtn) {
             addPresetBtn.addEventListener('click', () => this.showAddPresetDialog());
@@ -30,6 +37,10 @@ const BrushPresetsManager = {
         
         if (cancelPresetBtn) {
             cancelPresetBtn.addEventListener('click', () => this.hidePresetDialog());
+        }
+        
+        if (loadDefaultPresetsBtn) {
+            loadDefaultPresetsBtn.addEventListener('click', () => this.loadDefaultPresetsFromFile());
         }
     },
 
@@ -338,6 +349,56 @@ const BrushPresetsManager = {
             return this.presets[this.currentPresetIndex];
         }
         return null;
+    },
+
+    loadDefaultPresetsFromFile() {
+        fetch('brushpresets.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load brushpresets.json');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                        // Check if we already have presets
+                    if (this.presets.length > 0) {
+                        const choice = confirm('Load default brush presets? Click OK to replace current presets, or Cancel to append them.');
+                        if (choice) {
+                            // Replace presets
+                            this.presets = data;
+                        } else {
+                            // Append presets (avoiding duplicates by name)
+                            const existingNames = new Set(this.presets.map(p => p.name));
+                            const newPresets = data.filter(p => !existingNames.has(p.name));
+                            this.presets = [...this.presets, ...newPresets];
+                        }
+                    } else {
+                        // No existing presets, just load them
+                        this.presets = data;
+                    }
+                    this.savePresets();
+                    this.renderPresetsList();
+                    this.currentPresetIndex = null;
+                    this.updateActivePresetUI();
+                    
+                    console.log('Default brush presets loaded:', this.presets.length);
+                    
+                    if (typeof Notifications !== 'undefined') {
+                        const notifications = new Notifications();
+                        notifications.success(`${this.presets.length} default brush presets loaded`);
+                    }
+                } else {
+                    throw new Error('Invalid presets data format');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading default presets:', error);
+                if (typeof Notifications !== 'undefined') {
+                    const notifications = new Notifications();
+                    notifications.error('Failed to load default brush presets');
+                }
+            });
     },
 
     clearAllPresets() {

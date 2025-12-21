@@ -158,6 +158,7 @@ const SettingsManager = {
         if (showTutorialHintsCheckbox) showTutorialHintsCheckbox.checked = this.settings.showTutorialHints;
         if (showMinimapCheckbox) showMinimapCheckbox.checked = this.settings.showMinimap;
         if (snapToGridCheckbox) snapToGridCheckbox.checked = this.settings.snapToGrid;
+        // if (loadDefaultPresetsCheckbox) loadDefaultPresetsCheckbox.checked = this.settings.loadDefaultBrushPresets;
     },
 
     closeSettings() {
@@ -305,6 +306,7 @@ const SettingsManager = {
         this.settings.showTutorialHints = showTutorialHintsCheckbox ? showTutorialHintsCheckbox.checked : true;
         this.settings.showMinimap = showMinimapCheckbox ? showMinimapCheckbox.checked : true;
         this.settings.snapToGrid = snapToGridCheckbox ? snapToGridCheckbox.checked : false;
+        // this.settings.loadDefaultBrushPresets = loadDefaultPresetsCheckbox ? loadDefaultPresetsCheckbox.checked : true;
 
         // Apply settings
         this.applySettings();

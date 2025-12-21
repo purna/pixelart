@@ -33,6 +33,11 @@ function init() {
         SettingsManager.init();
     }
 
+    // Load user settings first
+    if (typeof SettingsManager !== 'undefined') {
+        SettingsManager.loadSettings();
+    }
+
     // Initialize brush presets manager
     if (typeof BrushPresetsManager !== 'undefined') {
         BrushPresetsManager.init();
@@ -40,16 +45,6 @@ function init() {
 
     // Initialize UI management
     UIManager.init();
-
-    // Load user settings using the new SettingsManager first
-    if (typeof SettingsManager !== 'undefined') {
-        SettingsManager.loadSettings();
-    } else {
-        // Fallback to old InputHandler if SettingsManager not available
-        if (typeof InputHandler !== 'undefined') {
-            InputHandler.loadSettings();
-        }
-    }
 
     // Initialize tutorial system after settings are loaded
     if (typeof TutorialSystem !== 'undefined') {

@@ -1522,6 +1522,18 @@ input[type="color"]:focus {
     color: var(--accent-primary);
 }
 
+/* Special styling for the load default presets button */
+#loadDefaultPresetsBtn {
+    background: var(--accent-tertiary);
+    color: #000;
+}
+
+#loadDefaultPresetsBtn:hover {
+    background: var(--accent-primary);
+    color: #000;
+    transform: scale(1.05);
+}
+
 /* Presets Container */
 .presets-container {
     max-height: 300px;
